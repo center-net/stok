@@ -74,12 +74,25 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     );
   }
 
+  void _showPasswordChangeDialog(User user) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return PasswordChangeDialog(user: user, onSave: _loadUsers);
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('إدارة المستخدمين'),
+        title: const Text(
+          'إدارة المستخدمين',
+          style: TextStyle(color: Colors.white),
+        ),
         backgroundColor: Theme.of(context).colorScheme.primary,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: _users.isEmpty
           ? const Center(
@@ -102,6 +115,13 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
+                        IconButton(
+                          icon: Icon(
+                            Icons.lock,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          onPressed: () => _showPasswordChangeDialog(user),
+                        ),
                         IconButton(
                           icon: Icon(
                             Icons.edit,
@@ -134,6 +154,104 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   }
 }
 
+class PasswordChangeDialog extends StatefulWidget {
+  final User user;
+  final VoidCallback onSave;
+
+  const PasswordChangeDialog({
+    super.key,
+    required this.user,
+    required this.onSave,
+  });
+
+  @override
+  State<PasswordChangeDialog> createState() => _PasswordChangeDialogState();
+}
+
+class _PasswordChangeDialogState extends State<PasswordChangeDialog> {
+  final _formKey = GlobalKey<FormState>();
+  late String _newPassword;
+  bool _isPasswordVisible = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _newPassword = '';
+  }
+
+  void _changePassword() async {
+    if (_formKey.currentState!.validate()) {
+      _formKey.currentState!.save();
+      final db = DatabaseHelper();
+
+      final userMap = {
+        'id': widget.user.id,
+        'name': widget.user.name,
+        'username': widget.user.username,
+        'password': User.hashPassword(_newPassword),
+        'role': widget.user.role,
+        'phone_number': widget.user.phoneNumber,
+      };
+
+      await db.updateUser(userMap);
+      if (mounted) {
+        CustomNotificationOverlay.show(context, 'تم تغيير كلمة المرور بنجاح!');
+        widget.onSave();
+        Navigator.pop(context);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('تغيير كلمة المرور'),
+      content: SingleChildScrollView(
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              TextFormField(
+                decoration: InputDecoration(
+                  labelText: 'كلمة المرور الجديدة',
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _isPasswordVisible
+                          ? Icons.visibility
+                          : Icons.visibility_off,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _isPasswordVisible = !_isPasswordVisible;
+                      });
+                    },
+                  ),
+                ),
+                obscureText: !_isPasswordVisible,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'الرجاء إدخال كلمة المرور';
+                  }
+                  return null;
+                },
+                onSaved: (value) => _newPassword = value!,
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: <Widget>[
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('إلغاء'),
+        ),
+        ElevatedButton(onPressed: _changePassword, child: const Text('تغيير')),
+      ],
+    );
+  }
+}
+
 class UserFormDialog extends StatefulWidget {
   final User? user;
   final VoidCallback onSave;
@@ -161,7 +279,6 @@ class _UserFormDialogState extends State<UserFormDialog> {
     if (widget.user != null) {
       _name = widget.user!.name;
       _username = widget.user!.username;
-      _password = widget.user!.password;
       _role = widget.user!.role;
       _phoneNumber = widget.user!.phoneNumber;
     } else {
@@ -186,22 +303,24 @@ class _UserFormDialogState extends State<UserFormDialog> {
       _formKey.currentState!.save();
       final db = DatabaseHelper();
 
-      final user = User(
-        id: widget.user?.id,
-        name: _name,
-        username: _username,
-        password: _password, // Remember to hash passwords in a real app!
-        role: _role,
-        phoneNumber: _phoneNumber,
-      );
+      final userMap = {
+        'id': widget.user?.id,
+        'name': _name,
+        'username': _username,
+        'password': widget.user != null
+            ? widget.user!.password
+            : User.hashPassword(_password), // Hash only for new users
+        'role': _role,
+        'phone_number': _phoneNumber,
+      };
 
-      if (user.id == null) {
-        await db.insertUser(user.toMap());
+      if (userMap['id'] == null) {
+        await db.insertUser(userMap);
         if (mounted) {
           CustomNotificationOverlay.show(context, 'تم إضافة المستخدم بنجاح!');
         }
       } else {
-        await db.updateUser(user.toMap());
+        await db.updateUser(userMap);
         if (mounted) {
           CustomNotificationOverlay.show(context, 'تم تعديل المستخدم بنجاح!');
         }
@@ -246,32 +365,33 @@ class _UserFormDialogState extends State<UserFormDialog> {
                 },
                 onSaved: (value) => _username = value!,
               ),
-              TextFormField(
-                initialValue: _password,
-                decoration: InputDecoration(
-                  labelText: 'كلمة المرور',
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _isPasswordVisible
-                          ? Icons.visibility
-                          : Icons.visibility_off,
+              if (widget.user == null) // Only show password field for new users
+                TextFormField(
+                  initialValue: _password,
+                  decoration: InputDecoration(
+                    labelText: 'كلمة المرور',
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _isPasswordVisible
+                            ? Icons.visibility
+                            : Icons.visibility_off,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _isPasswordVisible = !_isPasswordVisible;
+                        });
+                      },
                     ),
-                    onPressed: () {
-                      setState(() {
-                        _isPasswordVisible = !_isPasswordVisible;
-                      });
-                    },
                   ),
+                  obscureText: !_isPasswordVisible,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'الرجاء إدخال كلمة المرور';
+                    }
+                    return null;
+                  },
+                  onSaved: (value) => _password = value!,
                 ),
-                obscureText: !_isPasswordVisible,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'الرجاء إدخال كلمة المرور';
-                  }
-                  return null;
-                },
-                onSaved: (value) => _password = value!,
-              ),
               DropdownButtonFormField<String>(
                 initialValue: _role,
                 decoration: const InputDecoration(labelText: 'الصلاحية'),
