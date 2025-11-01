@@ -1,8 +1,11 @@
+import 'package:crypto/crypto.dart';
+import 'dart:convert';
+
 class User {
   int? id;
   String name;
   String username;
-  String password;
+  String password; // This will be hashed
   String role;
   String? phoneNumber;
 
@@ -15,12 +18,63 @@ class User {
     this.phoneNumber,
   });
 
+  // Hash password using SHA-256
+  static String hashPassword(String password) {
+    final bytes = utf8.encode(password);
+    final digest = sha256.convert(bytes);
+    return digest.toString();
+  }
+
+  // Validate user input
+  static String? validateName(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'الرجاء إدخال الاسم';
+    }
+    if (value.length < 2) {
+      return 'الاسم يجب أن يكون على الأقل حرفين';
+    }
+    return null;
+  }
+
+  static String? validateUsername(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'الرجاء إدخال اسم المستخدم';
+    }
+    if (value.length < 3) {
+      return 'اسم المستخدم يجب أن يكون على الأقل 3 أحرف';
+    }
+    return null;
+  }
+
+  static String? validatePassword(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'الرجاء إدخال كلمة المرور';
+    }
+    if (value.length < 6) {
+      return 'كلمة المرور يجب أن تكون على الأقل 6 أحرف';
+    }
+    return null;
+  }
+
+  static String? validatePhoneNumber(String? value) {
+    if (value == null || value.isEmpty) {
+      return null; // Optional
+    }
+    if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
+      return 'الرجاء إدخال أرقام فقط';
+    }
+    if (value.length != 10) {
+      return 'يجب أن يتكون رقم الهاتف من 10 أرقام';
+    }
+    return null;
+  }
+
   Map<String, dynamic> toMap() {
     return {
       'id': id,
       'name': name,
       'username': username,
-      'password': password,
+      'password': hashPassword(password), // Hash before storing
       'role': role,
       'phone_number': phoneNumber,
     };
@@ -31,7 +85,7 @@ class User {
       id: map['id'],
       name: map['name'],
       username: map['username'],
-      password: map['password'],
+      password: map['password'], // Password is already hashed in DB
       role: map['role'],
       phoneNumber: map['phone_number'],
     );

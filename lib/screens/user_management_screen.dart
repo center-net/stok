@@ -82,7 +82,9 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
         backgroundColor: Theme.of(context).colorScheme.primary,
       ),
       body: _users.isEmpty
-          ? const Center(child: Text('لم يتم العثور على مستخدمين. أضف مستخدمًا جديدًا!'))
+          ? const Center(
+              child: Text('لم يتم العثور على مستخدمين. أضف مستخدمًا جديدًا!'),
+            )
           : ListView.builder(
               itemCount: _users.length,
               itemBuilder: (context, index) {
@@ -196,18 +198,12 @@ class _UserFormDialogState extends State<UserFormDialog> {
       if (user.id == null) {
         await db.insertUser(user.toMap());
         if (mounted) {
-          CustomNotificationOverlay.show(
-            context,
-            'تم إضافة المستخدم بنجاح!',
-          );
+          CustomNotificationOverlay.show(context, 'تم إضافة المستخدم بنجاح!');
         }
       } else {
         await db.updateUser(user.toMap());
         if (mounted) {
-          CustomNotificationOverlay.show(
-            context,
-            'تم تعديل المستخدم بنجاح!',
-          );
+          CustomNotificationOverlay.show(context, 'تم تعديل المستخدم بنجاح!');
         }
       }
       widget.onSave();
@@ -230,24 +226,20 @@ class _UserFormDialogState extends State<UserFormDialog> {
               TextFormField(
                 initialValue: _name,
                 decoration: const InputDecoration(labelText: 'الاسم'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'الرجاء إدخال الاسم';
-                  }
-                  return null;
-                },
+                validator: User.validateName,
                 onSaved: (value) => _name = value!,
               ),
               TextFormField(
                 initialValue: _username,
                 decoration: const InputDecoration(labelText: 'اسم المستخدم'),
                 validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'الرجاء إدخال اسم المستخدم';
-                  }
+                  String? baseValidation = User.validateUsername(value);
+                  if (baseValidation != null) return baseValidation;
                   // Check for uniqueness locally
-                  if (_allUsers.any((user) =>
-                      user.username == value && user.id != widget.user?.id)) {
+                  if (_allUsers.any(
+                    (user) =>
+                        user.username == value && user.id != widget.user?.id,
+                  )) {
                     return 'اسم المستخدم موجود بالفعل!';
                   }
                   return null;
@@ -260,7 +252,9 @@ class _UserFormDialogState extends State<UserFormDialog> {
                   labelText: 'كلمة المرور',
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                      _isPasswordVisible
+                          ? Icons.visibility
+                          : Icons.visibility_off,
                     ),
                     onPressed: () {
                       setState(() {
@@ -299,18 +293,13 @@ class _UserFormDialogState extends State<UserFormDialog> {
                 decoration: const InputDecoration(labelText: 'رقم الهاتف'),
                 keyboardType: TextInputType.phone,
                 validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return null; // Phone number is optional
-                  }
-                  if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
-                    return 'الرجاء إدخال أرقام فقط';
-                  }
-                  if (value.length != 10) {
-                    return 'يجب أن يتكون رقم الهاتف من 10 أرقام';
-                  }
+                  String? baseValidation = User.validatePhoneNumber(value);
+                  if (baseValidation != null) return baseValidation;
                   // Check for uniqueness locally
-                  if (_allUsers.any((user) =>
-                      user.phoneNumber == value && user.id != widget.user?.id)) {
+                  if (_allUsers.any(
+                    (user) =>
+                        user.phoneNumber == value && user.id != widget.user?.id,
+                  )) {
                     return 'رقم الهاتف موجود بالفعل!';
                   }
                   return null;

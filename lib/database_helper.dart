@@ -45,7 +45,7 @@ class DatabaseHelper {
       await db.insert('Users', {
         'name': 'المستخدم المسؤول',
         'username': 'admin',
-        'password': 'admin', // In a real app, hash this password!
+        'password': User.hashPassword('admin'), // Hash the password
         'role': 'manager',
         'phone_number': '1234567890',
       });
@@ -80,7 +80,7 @@ class DatabaseHelper {
     List<Map<String, dynamic>> users = await db.query(
       'Users',
       where: 'username = ? AND password = ?',
-      whereArgs: [username, password],
+      whereArgs: [username, User.hashPassword(password)],
     );
     if (users.isNotEmpty) {
       return users.first;
