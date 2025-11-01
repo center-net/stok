@@ -6,7 +6,7 @@ class User {
   String name;
   String username;
   String password; // This will be hashed
-  String role;
+  int? roleId;
   String? phoneNumber;
 
   User({
@@ -14,9 +14,25 @@ class User {
     required this.name,
     required this.username,
     required this.password,
-    required this.role,
+    this.roleId,
     this.phoneNumber,
   });
+
+  String get role {
+    if (roleId == null) return 'customer';
+    switch (roleId) {
+      case 1:
+        return 'manager';
+      case 2:
+        return 'observer';
+      case 3:
+        return 'seller';
+      case 4:
+        return 'customer';
+      default:
+        return 'customer';
+    }
+  }
 
   // Hash password using SHA-256
   static String hashPassword(String password) {
@@ -75,7 +91,7 @@ class User {
       'name': name,
       'username': username,
       'password': hashPassword(password), // Hash before storing
-      'role': role,
+      'role_id': roleId,
       'phone_number': phoneNumber,
     };
   }
@@ -86,7 +102,7 @@ class User {
       name: map['name'],
       username: map['username'],
       password: map['password'], // Password is already hashed in DB
-      role: map['role'],
+      roleId: map['role_id'],
       phoneNumber: map['phone_number'],
     );
   }

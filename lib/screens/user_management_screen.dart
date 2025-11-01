@@ -265,7 +265,7 @@ class _PasswordChangeDialogState extends State<PasswordChangeDialog> {
         'name': widget.user.name,
         'username': widget.user.username,
         'password': User.hashPassword(_newPassword),
-        'role': widget.user.role,
+        'role_id': widget.user.roleId,
         'phone_number': widget.user.phoneNumber,
       };
 
@@ -379,6 +379,24 @@ class _UserFormDialogState extends State<UserFormDialog> {
       _formKey.currentState!.save();
       final db = DatabaseHelper();
 
+      int? roleId;
+      switch (_role) {
+        case 'manager':
+          roleId = 1;
+          break;
+        case 'observer':
+          roleId = 2;
+          break;
+        case 'seller':
+          roleId = 3;
+          break;
+        case 'customer':
+          roleId = 4;
+          break;
+        default:
+          roleId = 4;
+      }
+
       final userMap = {
         'id': widget.user?.id,
         'name': _name,
@@ -386,7 +404,7 @@ class _UserFormDialogState extends State<UserFormDialog> {
         'password': widget.user != null
             ? widget.user!.password
             : User.hashPassword(_password), // Hash only for new users
-        'role': _role,
+        'role_id': roleId,
         'phone_number': _phoneNumber,
       };
 

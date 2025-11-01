@@ -51,7 +51,7 @@ class DatabaseHelper {
         'name': 'المستخدم المسؤول',
         'username': 'admin',
         'password': User.hashPassword('admin'), // Hash the password
-        'role': 'manager',
+        'role_id': 1, // manager role id
         'phone_number': '1234567890',
       });
     }
@@ -67,6 +67,25 @@ class DatabaseHelper {
           description TEXT
         );
       ''');
+
+      // Insert default roles
+      await db.insert('Roles', {'name': 'manager', 'description': 'مدير'});
+      await db.insert('Roles', {'name': 'observer', 'description': 'مراقب'});
+      await db.insert('Roles', {'name': 'seller', 'description': 'بائع'});
+      await db.insert('Roles', {'name': 'customer', 'description': 'عميل'});
+
+      // Add role_id column to Users table
+      await db.execute(
+        'ALTER TABLE Users ADD COLUMN role_id INTEGER REFERENCES Roles(id)',
+      );
+
+      // Migrate existing role data
+      await db.rawUpdate('''
+        UPDATE Users SET role_id = (SELECT id FROM Roles WHERE name = Users.role)
+      ''');
+
+      // Drop the old role column
+      await db.execute('ALTER TABLE Users DROP COLUMN role');
     }
   }
 

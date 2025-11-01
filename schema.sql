@@ -3,8 +3,9 @@ CREATE TABLE IF NOT EXISTS Users (
     name TEXT NOT NULL,
     username TEXT NOT NULL UNIQUE,
     password TEXT NOT NULL,
-    role TEXT NOT NULL CHECK(role IN ('manager', 'observer', 'seller', 'customer')),
-    phone_number TEXT
+    role_id INTEGER,
+    phone_number TEXT,
+    FOREIGN KEY (role_id) REFERENCES Roles(id)
 );
 
 CREATE TABLE IF NOT EXISTS Vendors (
