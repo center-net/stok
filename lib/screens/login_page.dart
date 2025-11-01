@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ipcam/database_helper.dart';
 import 'package:ipcam/screens/home_page.dart';
+import 'package:ipcam/widgets/custom_notification.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -36,19 +37,26 @@ class _LoginPageState extends State<LoginPage> {
 
     final user = await DatabaseHelper().authenticateUser(username, password);
 
+    if (!mounted) {
+      return;
+    }
+
     if (user != null) {
       print('LoginPage: Login successful for user: ${user['username']}');
-      ScaffoldMessenger.of(
+      CustomNotificationOverlay.show(
         context,
-      ).showSnackBar(SnackBar(content: Text('مرحباً، ${user['name']}')));
+        'مرحباً، ${user['name']}',
+      );
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const HomePage()),
       );
     } else {
       print('LoginPage: Login failed for username: $username');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('اسم المستخدم أو كلمة المرور غير صحيحة')),
+      CustomNotificationOverlay.show(
+        context,
+        'اسم المستخدم أو كلمة المرور غير صحيحة',
+        backgroundColor: Colors.red,
       );
     }
   }
@@ -61,31 +69,36 @@ class _LoginPageState extends State<LoginPage> {
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              TextField(
-                controller: _usernameController,
-                decoration: const InputDecoration(
-                  labelText: 'اسم المستخدم',
-                  border: OutlineInputBorder(),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 360),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                TextField(
+                  controller: _usernameController,
+                  decoration: const InputDecoration(
+                    labelText: 'اسم المستخدم',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16.0),
-              TextField(
-                controller: _passwordController,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'كلمة المرور',
-                  border: OutlineInputBorder(),
+                const SizedBox(height: 16.0),
+                TextField(
+                  controller: _passwordController,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText: 'كلمة المرور',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 24.0),
-              ElevatedButton(
-                onPressed: _login,
-                child: const Text('تسجيل الدخول'),
-              ),
-            ],
+                const SizedBox(height: 24.0),
+                ElevatedButton(
+                  onPressed: _login,
+                  child: const Text('تسجيل الدخول'),
+                ),
+              ],
+            ),
           ),
         ),
       ),

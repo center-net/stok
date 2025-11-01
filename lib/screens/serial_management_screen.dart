@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:ipcam/database_helper.dart';
 import 'package:ipcam/models.dart';
 
+import 'package:ipcam/widgets/custom_notification.dart';
+
 class SerialManagementScreen extends StatefulWidget {
   const SerialManagementScreen({super.key});
 
@@ -33,7 +35,7 @@ class _SerialManagementScreenState extends State<SerialManagementScreen> {
     try {
       return _products.firstWhere((product) => product.id == productId).name;
     } catch (e) {
-      return 'Unknown Product';
+      return 'منتج غير معروف';
     }
   }
 
@@ -50,25 +52,52 @@ class _SerialManagementScreenState extends State<SerialManagementScreen> {
     );
   }
 
-  void _deleteSerial(int id) async {
+  void _performDeleteSerial(int id) async {
     await DatabaseHelper().deleteSerial(id);
     _loadData();
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Serial deleted successfully!')),
+      CustomNotificationOverlay.show(
+        context,
+        'تم حذف الرقم التسلسلي بنجاح!',
+        backgroundColor: Colors.red,
       );
     }
+  }
+
+  void _confirmDelete(int id, String serialNumber) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('تأكيد الحذف'),
+          content: Text('هل أنت متأكد أنك تريد حذف الرقم التسلسلي: $serialNumber؟'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('إلغاء'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                _performDeleteSerial(id);
+                Navigator.pop(context);
+              },
+              child: const Text('حذف'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Serial Numbers Management'),
+        title: const Text('إدارة الأرقام التسلسلية'),
         backgroundColor: Theme.of(context).colorScheme.primary,
       ),
       body: _serials.isEmpty
-          ? const Center(child: Text('No serial numbers found. Add a new one!'))
+          ? const Center(child: Text('لم يتم العثور على أرقام تسلسلية. أضف رقما جديدا!'))
           : ListView.builder(
               itemCount: _serials.length,
               itemBuilder: (context, index) {
@@ -79,9 +108,9 @@ class _SerialManagementScreenState extends State<SerialManagementScreen> {
                     vertical: 8.0,
                   ),
                   child: ListTile(
-                    title: Text('Serial No: ${serial.serialNumber}'),
+                    title: Text('الرقم التسلسلي: ${serial.serialNumber}'),
                     subtitle: Text(
-                      'Product: ${_getProductName(serial.productId)} | Status: ${serial.status}',
+                      'المنتج: ${_getProductName(serial.productId)} | الحالة: ${serial.status}',
                     ),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -98,7 +127,7 @@ class _SerialManagementScreenState extends State<SerialManagementScreen> {
                             Icons.delete,
                             color: Theme.of(context).colorScheme.error,
                           ),
-                          onPressed: () => _deleteSerial(serial.id!),
+                          onPressed: () => _confirmDelete(serial.id!, serial.serialNumber),
                         ),
                       ],
                     ),
@@ -168,8 +197,20 @@ class _SerialFormDialogState extends State<SerialFormDialog> {
 
       if (serial.id == null) {
         await db.insertSerial(serial.toMap());
+        if (mounted) {
+          CustomNotificationOverlay.show(
+            context,
+            'تم إضافة الرقم التسلسلي بنجاح!',
+          );
+        }
       } else {
         await db.updateSerial(serial.toMap());
+        if (mounted) {
+          CustomNotificationOverlay.show(
+            context,
+            'تم تعديل الرقم التسلسلي بنجاح!',
+          );
+        }
       }
       widget.onSave();
       if (mounted) {
@@ -181,7 +222,7 @@ class _SerialFormDialogState extends State<SerialFormDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(widget.serial == null ? 'Add Serial' : 'Edit Serial'),
+      title: Text(widget.serial == null ? 'إضافة رقم تسلسلي' : 'تعديل رقم تسلسلي'),
       content: SingleChildScrollView(
         child: Form(
           key: _formKey,
@@ -190,11 +231,11 @@ class _SerialFormDialogState extends State<SerialFormDialog> {
             children: <Widget>[
               DropdownButtonFormField<int?>(
                 initialValue: _productId,
-                decoration: const InputDecoration(labelText: 'Product'),
+                decoration: const InputDecoration(labelText: 'المنتج'),
                 items: [
                   const DropdownMenuItem(
                     value: null,
-                    child: Text('Select Product'),
+                    child: Text('اختر المنتج'),
                   ),
                   ...widget.products.map(
                     (product) => DropdownMenuItem(
@@ -205,7 +246,7 @@ class _SerialFormDialogState extends State<SerialFormDialog> {
                 ],
                 validator: (value) {
                   if (value == null) {
-                    return 'Please select a product';
+                    return 'الرجاء اختيار منتج';
                   }
                   return null;
                 },
@@ -218,10 +259,10 @@ class _SerialFormDialogState extends State<SerialFormDialog> {
               ),
               TextFormField(
                 initialValue: _serialNumber,
-                decoration: const InputDecoration(labelText: 'Serial Number'),
+                decoration: const InputDecoration(labelText: 'الرقم التسلسلي'),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter a serial number';
+                    return 'الرجاء إدخال الرقم التسلسلي';
                   }
                   return null;
                 },
@@ -229,17 +270,17 @@ class _SerialFormDialogState extends State<SerialFormDialog> {
               ),
               DropdownButtonFormField<String>(
                 initialValue: _status,
-                decoration: const InputDecoration(labelText: 'Status'),
+                decoration: const InputDecoration(labelText: 'الحالة'),
                 items: const [
-                  DropdownMenuItem(value: 'in_stock', child: Text('In Stock')),
-                  DropdownMenuItem(value: 'sold', child: Text('Sold')),
+                  DropdownMenuItem(value: 'in_stock', child: Text('في المخزن')),
+                  DropdownMenuItem(value: 'sold', child: Text('مباع')),
                   DropdownMenuItem(
                     value: 'returned_purchase',
-                    child: Text('Returned (Purchase)'),
+                    child: Text('مرتجع (شراء)'),
                   ),
                   DropdownMenuItem(
                     value: 'returned_sale',
-                    child: Text('Returned (Sale)'),
+                    child: Text('مرتجع (بيع)'),
                   ),
                 ],
                 onChanged: (value) {
@@ -256,9 +297,9 @@ class _SerialFormDialogState extends State<SerialFormDialog> {
       actions: <Widget>[
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: const Text('إلغاء'),
         ),
-        ElevatedButton(onPressed: _saveSerial, child: const Text('Save')),
+        ElevatedButton(onPressed: _saveSerial, child: const Text('حفظ')),
       ],
     );
   }

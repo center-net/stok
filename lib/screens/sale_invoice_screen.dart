@@ -3,6 +3,8 @@ import 'package:ipcam/database_helper.dart';
 import 'package:ipcam/models.dart';
 import 'package:intl/intl.dart' as intl; // Import with prefix
 
+import 'package:ipcam/widgets/custom_notification.dart';
+
 class SaleInvoiceScreen extends StatefulWidget {
   const SaleInvoiceScreen({super.key});
 
@@ -36,7 +38,7 @@ class _SaleInvoiceScreenState extends State<SaleInvoiceScreen> {
     try {
       return _customers.firstWhere((user) => user.id == customerId).name;
     } catch (e) {
-      return 'Unknown Customer';
+      return 'عميل غير معروف';
     }
   }
 
@@ -53,25 +55,52 @@ class _SaleInvoiceScreenState extends State<SaleInvoiceScreen> {
     );
   }
 
-  void _deleteSaleInvoice(int id) async {
+  void _performDeleteSaleInvoice(int id) async {
     await DatabaseHelper().deleteSaleInvoice(id);
     _loadData();
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Sale Invoice deleted successfully!')),
+      CustomNotificationOverlay.show(
+        context,
+        'تم حذف فاتورة البيع بنجاح!',
+        backgroundColor: Colors.red,
       );
     }
+  }
+
+  void _confirmDelete(int id, String invoiceNumber) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('تأكيد الحذف'),
+          content: Text('هل أنت متأكد أنك تريد حذف فاتورة البيع رقم: $invoiceNumber؟'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('إلغاء'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                _performDeleteSaleInvoice(id);
+                Navigator.pop(context);
+              },
+              child: const Text('حذف'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Sales Invoices'),
+        title: const Text('فواتير البيع'),
         backgroundColor: Theme.of(context).colorScheme.primary,
       ),
       body: _saleInvoices.isEmpty
-          ? const Center(child: Text('No sales invoices found.'))
+          ? const Center(child: Text('لم يتم العثور على فواتير بيع.'))
           : ListView.builder(
               itemCount: _saleInvoices.length,
               itemBuilder: (context, index) {
@@ -82,9 +111,9 @@ class _SaleInvoiceScreenState extends State<SaleInvoiceScreen> {
                     vertical: 8.0,
                   ),
                   child: ListTile(
-                    title: Text('Invoice No: ${invoice.invoiceNumber}'),
+                    title: Text('رقم الفاتورة: ${invoice.invoiceNumber}'),
                     subtitle: Text(
-                      'Customer: ${_getCustomerName(invoice.customerId)} | Total: \$${invoice.totalAmount.toStringAsFixed(2)}\nDate: ' +
+                      'العميل: ${_getCustomerName(invoice.customerId)} | الإجمالي: د.ل${invoice.totalAmount.toStringAsFixed(2)}\nالتاريخ: ' +
                           intl.DateFormat.yMd().add_jm().format(
                             DateTime.parse(invoice.invoiceDate),
                           ),
@@ -105,7 +134,7 @@ class _SaleInvoiceScreenState extends State<SaleInvoiceScreen> {
                             Icons.delete,
                             color: Theme.of(context).colorScheme.error,
                           ),
-                          onPressed: () => _deleteSaleInvoice(invoice.id!),
+                          onPressed: () => _confirmDelete(invoice.id!, invoice.invoiceNumber),
                         ),
                         IconButton(
                           icon: Icon(
@@ -199,8 +228,20 @@ class _SaleInvoiceFormDialogState extends State<SaleInvoiceFormDialog> {
 
       if (invoice.id == null) {
         await db.insertSaleInvoice(invoice.toMap());
+        if (mounted) {
+          CustomNotificationOverlay.show(
+            context,
+            'تم إضافة فاتورة البيع بنجاح!',
+          );
+        }
       } else {
         await db.updateSaleInvoice(invoice.toMap());
+        if (mounted) {
+          CustomNotificationOverlay.show(
+            context,
+            'تم تعديل فاتورة البيع بنجاح!',
+          );
+        }
       }
       widget.onSave();
       if (mounted) {
@@ -213,7 +254,7 @@ class _SaleInvoiceFormDialogState extends State<SaleInvoiceFormDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text(
-        widget.invoice == null ? 'Add Sale Invoice' : 'Edit Sale Invoice',
+        widget.invoice == null ? 'إضافة فاتورة بيع' : 'تعديل فاتورة بيع',
       ),
       content: SingleChildScrollView(
         child: Form(
@@ -223,10 +264,10 @@ class _SaleInvoiceFormDialogState extends State<SaleInvoiceFormDialog> {
             children: <Widget>[
               TextFormField(
                 initialValue: _invoiceNumber,
-                decoration: const InputDecoration(labelText: 'Invoice Number'),
+                decoration: const InputDecoration(labelText: 'رقم الفاتورة'),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter an invoice number';
+                    return 'الرجاء إدخال رقم الفاتورة';
                   }
                   return null;
                 },
@@ -234,11 +275,11 @@ class _SaleInvoiceFormDialogState extends State<SaleInvoiceFormDialog> {
               ),
               DropdownButtonFormField<int?>(
                 initialValue: _customerId,
-                decoration: const InputDecoration(labelText: 'Customer'),
+                decoration: const InputDecoration(labelText: 'العميل'),
                 items: [
                   const DropdownMenuItem(
                     value: null,
-                    child: Text('Select Customer'),
+                    child: Text('اختر العميل'),
                   ),
                   ...widget.customers.map(
                     (customer) => DropdownMenuItem(
@@ -256,14 +297,14 @@ class _SaleInvoiceFormDialogState extends State<SaleInvoiceFormDialog> {
               ),
               TextFormField(
                 initialValue: _totalAmount.toStringAsFixed(2),
-                decoration: const InputDecoration(labelText: 'Total Amount'),
+                decoration: const InputDecoration(labelText: 'المبلغ الإجمالي'),
                 keyboardType: TextInputType.number,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter total amount';
+                    return 'الرجاء إدخال المبلغ الإجمالي';
                   }
                   if (double.tryParse(value) == null) {
-                    return 'Please enter a valid number';
+                    return 'الرجاء إدخال رقم صحيح';
                   }
                   return null;
                 },
@@ -271,14 +312,14 @@ class _SaleInvoiceFormDialogState extends State<SaleInvoiceFormDialog> {
               ),
               TextFormField(
                 initialValue: _paidAmount.toStringAsFixed(2),
-                decoration: const InputDecoration(labelText: 'Paid Amount'),
+                decoration: const InputDecoration(labelText: 'المبلغ المدفوع'),
                 keyboardType: TextInputType.number,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter paid amount';
+                    return 'الرجاء إدخال المبلغ المدفوع';
                   }
                   if (double.tryParse(value) == null) {
-                    return 'Please enter a valid number';
+                    return 'الرجاء إدخال رقم صحيح';
                   }
                   return null;
                 },
@@ -293,7 +334,7 @@ class _SaleInvoiceFormDialogState extends State<SaleInvoiceFormDialog> {
               TextFormField(
                 initialValue: _remainingAmount.toStringAsFixed(2),
                 decoration: const InputDecoration(
-                  labelText: 'Remaining Amount',
+                  labelText: 'المبلغ المتبقي',
                 ),
                 keyboardType: TextInputType.number,
                 readOnly: true,
@@ -305,9 +346,9 @@ class _SaleInvoiceFormDialogState extends State<SaleInvoiceFormDialog> {
       actions: <Widget>[
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: const Text('إلغاء'),
         ),
-        ElevatedButton(onPressed: _saveSaleInvoice, child: const Text('Save')),
+        ElevatedButton(onPressed: _saveSaleInvoice, child: const Text('حفظ')),
       ],
     );
   }

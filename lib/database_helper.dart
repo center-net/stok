@@ -43,7 +43,7 @@ class DatabaseHelper {
     );
     if (count == 0) {
       await db.insert('Users', {
-        'name': 'Admin User',
+        'name': 'المستخدم المسؤول',
         'username': 'admin',
         'password': 'admin', // In a real app, hash this password!
         'role': 'manager',

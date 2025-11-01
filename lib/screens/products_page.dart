@@ -41,7 +41,7 @@ class _ProductsPageState extends State<ProductsPage> {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
+            return Center(child: Text('خطأ: ${snapshot.error}'));
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
             return const Center(child: Text('لا توجد منتجات'));
           } else {
@@ -86,7 +86,7 @@ class _ProductsPageState extends State<ProductsPage> {
                           vertical: 4.0,
                         ),
                         child: Text(
-                          '${product['price']} SAR',
+                          '${product['salePrice1']} ريال',
                           style: TextStyle(
                             color: Theme.of(context).primaryColor,
                           ),

@@ -5,6 +5,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:ipcam/database_helper.dart';
 import 'package:ipcam/models.dart';
 
+import 'package:ipcam/widgets/custom_notification.dart';
+
 class ProductManagementScreen extends StatefulWidget {
   const ProductManagementScreen({super.key});
 
@@ -62,14 +64,41 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
     );
   }
 
-  void _deleteProduct(int id) async {
+  void _performDeleteProduct(int id) async {
     await DatabaseHelper().deleteProduct(id);
     _loadProducts();
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('تم حذف المنتج بنجاح!')),
+      CustomNotificationOverlay.show(
+        context,
+        'تم حذف المنتج بنجاح!',
+        backgroundColor: Colors.red,
       );
     }
+  }
+
+  void _confirmDelete(int id, String name) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('تأكيد الحذف'),
+          content: Text('هل أنت متأكد أنك تريد حذف المنتج: $name؟'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('إلغاء'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                _performDeleteProduct(id);
+                Navigator.pop(context);
+              },
+              child: const Text('حذف'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -117,7 +146,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                             Icons.delete,
                             color: Theme.of(context).colorScheme.error,
                           ),
-                          onPressed: () => _deleteProduct(product.id!),
+                          onPressed: () => _confirmDelete(product.id!, product.name),
                         ),
                       ],
                     ),
@@ -218,10 +247,10 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
       if (_salePrice1 < _purchasePrice ||
           (_salePrice2 != null && _salePrice2! < _purchasePrice) ||
           (_salePrice3 != null && _salePrice3! < _purchasePrice)) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('يجب أن تكون أسعار البيع أعلى من سعر الشراء'),
-          ),
+        CustomNotificationOverlay.show(
+          context,
+          'يجب أن تكون أسعار البيع أعلى من سعر الشراء',
+          backgroundColor: Colors.red,
         );
         return;
       }
@@ -242,8 +271,20 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
 
       if (product.id == null) {
         await db.insertProduct(product.toMap());
+        if (mounted) {
+          CustomNotificationOverlay.show(
+            context,
+            'تم إضافة المنتج بنجاح!',
+          );
+        }
       } else {
         await db.updateProduct(product.toMap());
+        if (mounted) {
+          CustomNotificationOverlay.show(
+            context,
+            'تم تعديل المنتج بنجاح!',
+          );
+        }
       }
       widget.onSave();
       if (mounted) {
@@ -264,10 +305,10 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
             children: <Widget>[
               TextFormField(
                 initialValue: _productCode,
-                decoration: const InputDecoration(labelText: 'Product Code'),
+                decoration: const InputDecoration(labelText: 'رمز المنتج'),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter a product code';
+                    return 'الرجاء إدخال رمز المنتج';
                   }
                   return null;
                 },
@@ -275,10 +316,10 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
               ),
               TextFormField(
                 initialValue: _name,
-                decoration: const InputDecoration(labelText: 'Product Name'),
+                decoration: const InputDecoration(labelText: 'اسم المنتج'),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter a product name';
+                    return 'الرجاء إدخال اسم المنتج';
                   }
                   return null;
                 },
@@ -286,11 +327,11 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
               ),
               DropdownButtonFormField<int?>(
                 initialValue: _categoryId,
-                decoration: const InputDecoration(labelText: 'Category'),
+                decoration: const InputDecoration(labelText: 'الفئة'),
                 items: [
                   const DropdownMenuItem(
                     value: null,
-                    child: Text('Select Category'),
+                    child: Text('اختر الفئة'),
                   ),
                   ...widget.categories.map(
                     (category) => DropdownMenuItem(
@@ -308,20 +349,20 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
               ),
               TextFormField(
                 initialValue: _barcode,
-                decoration: const InputDecoration(labelText: 'Barcode'),
+                decoration: const InputDecoration(labelText: 'الرمز الشريطي'),
                 onSaved: (value) => _barcode = value,
               ),
               TextFormField(
                 initialValue: _purchasePrice.toString(),
-                decoration: const InputDecoration(labelText: 'Purchase Price'),
+                decoration: const InputDecoration(labelText: 'سعر الشراء'),
                 keyboardType:
                     TextInputType.number, // Changed to TextInputType.number
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter a purchase price';
+                    return 'الرجاء إدخال سعر الشراء';
                   }
                   if (double.tryParse(value) == null) {
-                    return 'Please enter a valid number';
+                    return 'الرجاء إدخال رقم صحيح';
                   }
                   return null;
                 },
@@ -329,15 +370,15 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
               ),
               TextFormField(
                 initialValue: _salePrice1.toString(),
-                decoration: const InputDecoration(labelText: 'Sale Price 1'),
+                decoration: const InputDecoration(labelText: 'سعر البيع 1'),
                 keyboardType:
                     TextInputType.number, // Changed to TextInputType.number
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter a sale price';
+                    return 'الرجاء إدخال سعر البيع';
                   }
                   if (double.tryParse(value) == null) {
-                    return 'Please enter a valid number';
+                    return 'الرجاء إدخال رقم صحيح';
                   }
                   return null;
                 },
@@ -346,7 +387,7 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
               TextFormField(
                 initialValue: _salePrice2?.toString(),
                 decoration: const InputDecoration(
-                  labelText: 'Sale Price 2 (Optional)',
+                  labelText: 'سعر البيع 2 (اختياري)',
                 ),
                 keyboardType: TextInputType.number,
                 onSaved: (value) => _salePrice2 = double.tryParse(value ?? ''),
@@ -354,7 +395,7 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
               TextFormField(
                 initialValue: _salePrice3?.toString(),
                 decoration: const InputDecoration(
-                  labelText: 'Sale Price 3 (Optional)',
+                  labelText: 'سعر البيع 3 (اختياري)',
                 ),
                 keyboardType: TextInputType.number,
                 onSaved: (value) => _salePrice3 = double.tryParse(value ?? ''),
@@ -362,15 +403,15 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
               TextFormField(
                 initialValue: _quantityInStock.toString(),
                 decoration: const InputDecoration(
-                  labelText: 'Quantity in Stock',
+                  labelText: 'الكمية في المخزون',
                 ),
                 keyboardType: TextInputType.number,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter quantity in stock';
+                    return 'الرجاء إدخال الكمية في المخزون';
                   }
                   if (int.tryParse(value) == null) {
-                    return 'Please enter a valid integer';
+                    return 'الرجاء إدخال عدد صحيح';
                   }
                   return null;
                 },
@@ -384,17 +425,17 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
                       width: 100,
                       fit: BoxFit.cover,
                     )
-                  : (_imageUrl != null
-                        ? Image.file(
-                            File(_imageUrl!),
-                            height: 100,
-                            width: 100,
-                            fit: BoxFit.cover,
-                          )
-                        : const Text('No image selected.')),
+                  : _imageUrl != null
+                      ? Image.file(
+                          File(_imageUrl!),
+                          height: 100,
+                          width: 100,
+                          fit: BoxFit.cover,
+                        )
+                      : const Text('لم يتم اختيار صورة.'),
               ElevatedButton(
                 onPressed: _pickImage,
-                child: const Text('Pick Image'),
+                child: const Text('اختر صورة'),
               ),
             ],
           ),
@@ -403,9 +444,9 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
       actions: <Widget>[
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: const Text('إلغاء'),
         ),
-        ElevatedButton(onPressed: _saveProduct, child: const Text('Save')),
+        ElevatedButton(onPressed: _saveProduct, child: const Text('حفظ')),
       ],
     );
   }

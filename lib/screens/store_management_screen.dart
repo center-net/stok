@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:ipcam/database_helper.dart';
 import 'package:ipcam/models.dart';
 
+import 'package:ipcam/widgets/custom_notification.dart';
+
 class StoreManagementScreen extends StatefulWidget {
   const StoreManagementScreen({super.key});
 
@@ -58,14 +60,41 @@ class _StoreManagementScreenState extends State<StoreManagementScreen> {
     );
   }
 
-  void _deleteStore(int id) async {
+  void _performDeleteStore(int id) async {
     await DatabaseHelper().deleteStore(id);
     _loadStores();
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('تم حذف المتجر بنجاح!')),
+      CustomNotificationOverlay.show(
+        context,
+        'تم حذف المتجر بنجاح!',
+        backgroundColor: Colors.red,
       );
     }
+  }
+
+  void _confirmDelete(int id, String name) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('تأكيد الحذف'),
+          content: Text('هل أنت متأكد أنك تريد حذف المتجر: $name؟'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('إلغاء'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                _performDeleteStore(id);
+                Navigator.pop(context);
+              },
+              child: const Text('حذف'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -106,7 +135,7 @@ class _StoreManagementScreenState extends State<StoreManagementScreen> {
                             Icons.delete,
                             color: Theme.of(context).colorScheme.error,
                           ),
-                          onPressed: () => _deleteStore(store.id!),
+                          onPressed: () => _confirmDelete(store.id!, store.name),
                         ),
                       ],
                     ),
@@ -184,8 +213,20 @@ class _StoreFormDialogState extends State<StoreFormDialog> {
 
       if (store.id == null) {
         await db.insertStore(store.toMap());
+        if (mounted) {
+          CustomNotificationOverlay.show(
+            context,
+            'تم إضافة المتجر بنجاح!',
+          );
+        }
       } else {
         await db.updateStore(store.toMap());
+        if (mounted) {
+          CustomNotificationOverlay.show(
+            context,
+            'تم تعديل المتجر بنجاح!',
+          );
+        }
       }
       widget.onSave();
       if (mounted) {
@@ -230,6 +271,18 @@ class _StoreFormDialogState extends State<StoreFormDialog> {
                 initialValue: _phoneNumber,
                 decoration: const InputDecoration(labelText: 'رقم الهاتف'),
                 keyboardType: TextInputType.phone,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return null; // Phone number is optional
+                  }
+                  if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
+                    return 'الرجاء إدخال أرقام فقط';
+                  }
+                  if (value.length != 10) {
+                    return 'يجب أن يتكون رقم الهاتف من 10 أرقام';
+                  }
+                  return null;
+                },
                 onSaved: (value) => _phoneNumber = value,
               ),
               DropdownButtonFormField<int?>(
@@ -266,7 +319,7 @@ class _StoreFormDialogState extends State<StoreFormDialog> {
           onPressed: () => Navigator.pop(context),
           child: const Text('إلغاء'),
         ),
-        ElevatedButton(onPressed: _saveStore, child: const Text('Save')),
+        ElevatedButton(onPressed: _saveStore, child: const Text('حفظ')),
       ],
     );
   }

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:ipcam/database_helper.dart';
 import 'package:ipcam/models.dart';
 
+import 'package:ipcam/widgets/custom_notification.dart';
+
 class CategoryManagementScreen extends StatefulWidget {
   const CategoryManagementScreen({super.key});
 
@@ -36,26 +38,53 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
     );
   }
 
-  void _deleteCategory(int id) async {
+  void _performDeleteCategory(int id) async {
     await DatabaseHelper().deleteCategory(id);
     _loadCategories();
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Category deleted successfully!')),
+      CustomNotificationOverlay.show(
+        context,
+        'تم حذف الفئة بنجاح!',
+        backgroundColor: Colors.red,
       );
     }
+  }
+
+  void _confirmDelete(int id, String name) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('تأكيد الحذف'),
+          content: Text('هل أنت متأكد أنك تريد حذف الفئة: $name؟'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('إلغاء'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                _performDeleteCategory(id);
+                Navigator.pop(context);
+              },
+              child: const Text('حذف'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Category Management'),
+        title: const Text('إدارة الفئات'),
         backgroundColor: Theme.of(context).colorScheme.primary,
       ),
       body: _categories.isEmpty
           ? const Center(
-              child: Text('No categories found. Add a new category!'),
+              child: Text('لم يتم العثور على فئات. أضف فئة جديدة!'),
             )
           : ListView.builder(
               itemCount: _categories.length,
@@ -84,7 +113,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                             Icons.delete,
                             color: Theme.of(context).colorScheme.error,
                           ),
-                          onPressed: () => _deleteCategory(category.id!),
+                          onPressed: () => _confirmDelete(category.id!, category.name),
                         ),
                       ],
                     ),
@@ -137,10 +166,21 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
 
       if (category.id == null) {
         await db.insertCategory(category.toMap());
+        if (mounted) {
+          CustomNotificationOverlay.show(
+            context,
+            'تم إضافة الفئة بنجاح!',
+          );
+        }
       } else {
         await db.updateCategory(category.toMap());
-      }
-      widget.onSave();
+        if (mounted) {
+          CustomNotificationOverlay.show(
+            context,
+            'تم تعديل الفئة بنجاح!',
+          );
+        }
+      }      widget.onSave();
       if (mounted) {
         Navigator.pop(context);
       }
@@ -150,7 +190,7 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(widget.category == null ? 'Add Category' : 'Edit Category'),
+      title: Text(widget.category == null ? 'إضافة فئة' : 'تعديل فئة'),
       content: SingleChildScrollView(
         child: Form(
           key: _formKey,
@@ -159,10 +199,10 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
             children: <Widget>[
               TextFormField(
                 initialValue: _name,
-                decoration: const InputDecoration(labelText: 'Category Name'),
+                decoration: const InputDecoration(labelText: 'اسم الفئة'),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter a category name';
+                    return 'الرجاء إدخال اسم الفئة';
                   }
                   return null;
                 },
@@ -175,9 +215,9 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
       actions: <Widget>[
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: const Text('إلغاء'),
         ),
-        ElevatedButton(onPressed: _saveCategory, child: const Text('Save')),
+        ElevatedButton(onPressed: _saveCategory, child: const Text('حفظ')),
       ],
     );
   }

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:ipcam/database_helper.dart';
 import 'package:ipcam/models.dart';
 
+import 'package:ipcam/widgets/custom_notification.dart';
+
 class VendorManagementScreen extends StatefulWidget {
   const VendorManagementScreen({super.key});
 
@@ -35,14 +37,41 @@ class _VendorManagementScreenState extends State<VendorManagementScreen> {
     );
   }
 
-  void _deleteVendor(int id) async {
+  void _performDeleteVendor(int id) async {
     await DatabaseHelper().deleteVendor(id);
     _loadVendors();
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('تم حذف المورد بنجاح!')),
+      CustomNotificationOverlay.show(
+        context,
+        'تم حذف المورد بنجاح!',
+        backgroundColor: Colors.red,
       );
     }
+  }
+
+  void _confirmDelete(int id, String name) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('تأكيد الحذف'),
+          content: Text('هل أنت متأكد أنك تريد حذف المورد: $name؟'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('إلغاء'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                _performDeleteVendor(id);
+                Navigator.pop(context);
+              },
+              child: const Text('حذف'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -83,7 +112,7 @@ class _VendorManagementScreenState extends State<VendorManagementScreen> {
                             Icons.delete,
                             color: Theme.of(context).colorScheme.error,
                           ),
-                          onPressed: () => _deleteVendor(vendor.id!),
+                          onPressed: () => _confirmDelete(vendor.id!, vendor.name),
                         ),
                       ],
                     ),
@@ -147,10 +176,21 @@ class _VendorFormDialogState extends State<VendorFormDialog> {
 
       if (vendor.id == null) {
         await db.insertVendor(vendor.toMap());
+        if (mounted) {
+          CustomNotificationOverlay.show(
+            context,
+            'تم إضافة المورد بنجاح!',
+          );
+        }
       } else {
         await db.updateVendor(vendor.toMap());
-      }
-      widget.onSave();
+        if (mounted) {
+          CustomNotificationOverlay.show(
+            context,
+            'تم تعديل المورد بنجاح!',
+          );
+        }
+      }      widget.onSave();
       if (mounted) {
         Navigator.pop(context);
       }
@@ -182,6 +222,18 @@ class _VendorFormDialogState extends State<VendorFormDialog> {
                 initialValue: _phoneNumber,
                 decoration: const InputDecoration(labelText: 'رقم الهاتف'),
                 keyboardType: TextInputType.phone,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return null; // Phone number is optional
+                  }
+                  if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
+                    return 'الرجاء إدخال أرقام فقط';
+                  }
+                  if (value.length != 10) {
+                    return 'يجب أن يتكون رقم الهاتف من 10 أرقام';
+                  }
+                  return null;
+                },
                 onSaved: (value) => _phoneNumber = value,
               ),
               TextFormField(

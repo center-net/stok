@@ -3,6 +3,8 @@ import 'package:ipcam/database_helper.dart';
 import 'package:ipcam/models.dart';
 import 'package:intl/intl.dart' as intl; // Import with prefix
 
+import 'package:ipcam/widgets/custom_notification.dart';
+
 class SaleReturnScreen extends StatefulWidget {
   const SaleReturnScreen({super.key});
 
@@ -39,7 +41,7 @@ class _SaleReturnScreenState extends State<SaleReturnScreen> {
           .firstWhere((invoice) => invoice.id == invoiceId)
           .invoiceNumber;
     } catch (e) {
-      return 'Unknown Invoice';
+      return 'فاتورة غير معروفة';
     }
   }
 
@@ -47,7 +49,7 @@ class _SaleReturnScreenState extends State<SaleReturnScreen> {
     try {
       return _products.firstWhere((product) => product.id == productId).name;
     } catch (e) {
-      return 'Unknown Product';
+      return 'منتج غير معروف';
     }
   }
 
@@ -65,25 +67,52 @@ class _SaleReturnScreenState extends State<SaleReturnScreen> {
     );
   }
 
-  void _deleteSaleReturn(int id) async {
+  void _performDeleteSaleReturn(int id) async {
     await DatabaseHelper().deleteSaleReturn(id);
     _loadData();
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Sale Return deleted successfully!')),
+      CustomNotificationOverlay.show(
+        context,
+        'تم حذف مرتجع البيع بنجاح!',
+        backgroundColor: Colors.red,
       );
     }
+  }
+
+  void _confirmDelete(int id, String productName, int quantity) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('تأكيد الحذف'),
+          content: Text('هل أنت متأكد أنك تريد حذف مرتجع البيع لـ $quantity من $productName؟'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('إلغاء'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                _performDeleteSaleReturn(id);
+                Navigator.pop(context);
+              },
+              child: const Text('حذف'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Sale Returns'),
+        title: const Text('مرتجعات البيع'),
         backgroundColor: Theme.of(context).colorScheme.primary,
       ),
       body: _saleReturns.isEmpty
-          ? const Center(child: Text('No sale returns found.'))
+          ? const Center(child: Text('لم يتم العثور على مرتجعات بيع.'))
           : ListView.builder(
               itemCount: _saleReturns.length,
               itemBuilder: (context, index) {
@@ -95,10 +124,10 @@ class _SaleReturnScreenState extends State<SaleReturnScreen> {
                   ),
                   child: ListTile(
                     title: Text(
-                      'Product: ${_getProductName(sr.productId)} | Qty: ${sr.quantity}',
+                      'المنتج: ${_getProductName(sr.productId)} | الكمية: ${sr.quantity}',
                     ),
                     subtitle: Text(
-                      'Invoice: ${_getInvoiceNumber(sr.saleInvoiceId)} | Date: ' +
+                      'الفاتورة: ${_getInvoiceNumber(sr.saleInvoiceId)} | التاريخ: ' +
                           intl.DateFormat.yMd().format(
                             DateTime.parse(sr.returnDate),
                           ),
@@ -118,7 +147,7 @@ class _SaleReturnScreenState extends State<SaleReturnScreen> {
                             Icons.delete,
                             color: Theme.of(context).colorScheme.error,
                           ),
-                          onPressed: () => _deleteSaleReturn(sr.id!),
+                          onPressed: () => _confirmDelete(sr.id!, _getProductName(sr.productId), sr.quantity),
                         ),
                       ],
                     ),
@@ -198,8 +227,20 @@ class _SaleReturnFormDialogState extends State<SaleReturnFormDialog> {
 
       if (saleReturn.id == null) {
         await db.insertSaleReturn(saleReturn.toMap());
+        if (mounted) {
+          CustomNotificationOverlay.show(
+            context,
+            'تم إضافة مرتجع البيع بنجاح!',
+          );
+        }
       } else {
         await db.updateSaleReturn(saleReturn.toMap());
+        if (mounted) {
+          CustomNotificationOverlay.show(
+            context,
+            'تم تعديل مرتجع البيع بنجاح!',
+          );
+        }
       }
       widget.onSave();
       if (mounted) {
@@ -212,7 +253,7 @@ class _SaleReturnFormDialogState extends State<SaleReturnFormDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text(
-        widget.saleReturn == null ? 'Add Sale Return' : 'Edit Sale Return',
+        widget.saleReturn == null ? 'إضافة مرتجع بيع' : 'تعديل مرتجع بيع',
       ),
       content: SingleChildScrollView(
         child: Form(
@@ -222,11 +263,11 @@ class _SaleReturnFormDialogState extends State<SaleReturnFormDialog> {
             children: <Widget>[
               DropdownButtonFormField<int?>(
                 value: _saleInvoiceId,
-                decoration: const InputDecoration(labelText: 'Sale Invoice'),
+                decoration: const InputDecoration(labelText: 'فاتورة البيع'),
                 items: [
                   const DropdownMenuItem(
                     value: null,
-                    child: Text('Select Invoice'),
+                    child: Text('اختر الفاتورة'),
                   ),
                   ...widget.saleInvoices.map(
                     (invoice) => DropdownMenuItem(
@@ -237,7 +278,7 @@ class _SaleReturnFormDialogState extends State<SaleReturnFormDialog> {
                 ],
                 validator: (value) {
                   if (value == null) {
-                    return 'Please select an invoice';
+                    return 'الرجاء اختيار فاتورة';
                   }
                   return null;
                 },
@@ -250,11 +291,11 @@ class _SaleReturnFormDialogState extends State<SaleReturnFormDialog> {
               ),
               DropdownButtonFormField<int?>(
                 value: _productId,
-                decoration: const InputDecoration(labelText: 'Product'),
+                decoration: const InputDecoration(labelText: 'المنتج'),
                 items: [
                   const DropdownMenuItem(
                     value: null,
-                    child: Text('Select Product'),
+                    child: Text('اختر المنتج'),
                   ),
                   ...widget.products.map(
                     (product) => DropdownMenuItem(
@@ -265,7 +306,7 @@ class _SaleReturnFormDialogState extends State<SaleReturnFormDialog> {
                 ],
                 validator: (value) {
                   if (value == null) {
-                    return 'Please select a product';
+                    return 'الرجاء اختيار منتج';
                   }
                   return null;
                 },
@@ -278,14 +319,14 @@ class _SaleReturnFormDialogState extends State<SaleReturnFormDialog> {
               ),
               TextFormField(
                 initialValue: _quantity.toString(),
-                decoration: const InputDecoration(labelText: 'Quantity'),
+                decoration: const InputDecoration(labelText: 'الكمية'),
                 keyboardType: TextInputType.number,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter quantity';
+                    return 'الرجاء إدخال الكمية';
                   }
                   if (int.tryParse(value) == null || int.parse(value) <= 0) {
-                    return 'Please enter a valid positive integer';
+                    return 'الرجاء إدخال عدد صحيح موجب';
                   }
                   return null;
                 },
@@ -294,7 +335,7 @@ class _SaleReturnFormDialogState extends State<SaleReturnFormDialog> {
               TextFormField(
                 initialValue: _reason,
                 decoration: const InputDecoration(
-                  labelText: 'Reason (Optional)',
+                  labelText: 'السبب (اختياري)',
                 ),
                 maxLines: 2,
                 onSaved: (value) => _reason = value,
@@ -306,9 +347,9 @@ class _SaleReturnFormDialogState extends State<SaleReturnFormDialog> {
       actions: <Widget>[
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: const Text('إلغاء'),
         ),
-        ElevatedButton(onPressed: _saveSaleReturn, child: const Text('Save')),
+        ElevatedButton(onPressed: _saveSaleReturn, child: const Text('حفظ')),
       ],
     );
   }

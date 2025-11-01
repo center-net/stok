@@ -3,6 +3,8 @@ import 'package:ipcam/database_helper.dart';
 import 'package:ipcam/models.dart';
 import 'package:intl/intl.dart' as intl; // Import with prefix
 
+import 'package:ipcam/widgets/custom_notification.dart';
+
 class PurchaseInvoiceScreen extends StatefulWidget {
   const PurchaseInvoiceScreen({super.key});
 
@@ -37,7 +39,7 @@ class _PurchaseInvoiceScreenState extends State<PurchaseInvoiceScreen> {
     try {
       return _vendors.firstWhere((vendor) => vendor.id == vendorId).name;
     } catch (e) {
-      return 'Unknown Vendor';
+      return 'مورد غير معروف';
     }
   }
 
@@ -54,26 +56,53 @@ class _PurchaseInvoiceScreenState extends State<PurchaseInvoiceScreen> {
     );
   }
 
-  void _deletePurchaseInvoice(int id) async {
+  void _performDeletePurchaseInvoice(int id) async {
     await DatabaseHelper().deletePurchaseInvoice(id);
     _loadData();
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Purchase Invoice deleted successfully!')),
+      CustomNotificationOverlay.show(
+        context,
+        'تم حذف فاتورة الشراء بنجاح!',
+        backgroundColor: Colors.red,
       );
     }
+  }
+
+  void _confirmDelete(int id, String invoiceNumber) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('تأكيد الحذف'),
+          content: Text('هل أنت متأكد أنك تريد حذف فاتورة الشراء رقم: $invoiceNumber؟'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('إلغاء'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                _performDeletePurchaseInvoice(id);
+                Navigator.pop(context);
+              },
+              child: const Text('حذف'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Purchase Invoices'),
+        title: const Text('فواتير الشراء'),
         backgroundColor: Theme.of(context).colorScheme.primary,
       ),
       body: _purchaseInvoices.isEmpty
           ? const Center(
-              child: Text('No purchase invoices found. Add a new one!'),
+              child: Text('لم يتم العثور على فواتير شراء. أضف واحدة جديدة!'),
             )
           : ListView.builder(
               itemCount: _purchaseInvoices.length,
@@ -85,9 +114,9 @@ class _PurchaseInvoiceScreenState extends State<PurchaseInvoiceScreen> {
                     vertical: 8.0,
                   ),
                   child: ListTile(
-                    title: Text('Invoice No: ${invoice.invoiceNumber}'),
+                    title: Text('رقم الفاتورة: ${invoice.invoiceNumber}'),
                     subtitle: Text(
-                      'Vendor: ${_getVendorName(invoice.vendorId)} | Total: \$${invoice.totalAmount.toStringAsFixed(2)}\nDate: ' +
+                      'المورد: ${_getVendorName(invoice.vendorId)} | الإجمالي: د.ل${invoice.totalAmount.toStringAsFixed(2)}\nالتاريخ: ' +
                           intl.DateFormat.yMd().add_jm().format(
                             DateTime.parse(invoice.invoiceDate),
                           ),
@@ -108,7 +137,7 @@ class _PurchaseInvoiceScreenState extends State<PurchaseInvoiceScreen> {
                             Icons.delete,
                             color: Theme.of(context).colorScheme.error,
                           ),
-                          onPressed: () => _deletePurchaseInvoice(invoice.id!),
+                          onPressed: () => _confirmDelete(invoice.id!, invoice.invoiceNumber),
                         ),
                         IconButton(
                           icon: Icon(
@@ -203,8 +232,20 @@ class _PurchaseInvoiceFormDialogState extends State<PurchaseInvoiceFormDialog> {
 
       if (invoice.id == null) {
         await db.insertPurchaseInvoice(invoice.toMap());
+        if (mounted) {
+          CustomNotificationOverlay.show(
+            context,
+            'تم إضافة فاتورة الشراء بنجاح!',
+          );
+        }
       } else {
         await db.updatePurchaseInvoice(invoice.toMap());
+        if (mounted) {
+          CustomNotificationOverlay.show(
+            context,
+            'تم تعديل فاتورة الشراء بنجاح!',
+          );
+        }
       }
       widget.onSave();
       if (mounted) {
@@ -218,8 +259,8 @@ class _PurchaseInvoiceFormDialogState extends State<PurchaseInvoiceFormDialog> {
     return AlertDialog(
       title: Text(
         widget.invoice == null
-            ? 'Add Purchase Invoice'
-            : 'Edit Purchase Invoice',
+            ? 'إضافة فاتورة شراء'
+            : 'تعديل فاتورة شراء',
       ),
       content: SingleChildScrollView(
         child: Form(
@@ -229,10 +270,10 @@ class _PurchaseInvoiceFormDialogState extends State<PurchaseInvoiceFormDialog> {
             children: <Widget>[
               TextFormField(
                 initialValue: _invoiceNumber,
-                decoration: const InputDecoration(labelText: 'Invoice Number'),
+                decoration: const InputDecoration(labelText: 'رقم الفاتورة'),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter an invoice number';
+                    return 'الرجاء إدخال رقم الفاتورة';
                   }
                   return null;
                 },
@@ -240,11 +281,11 @@ class _PurchaseInvoiceFormDialogState extends State<PurchaseInvoiceFormDialog> {
               ),
               DropdownButtonFormField<int?>(
                 initialValue: _vendorId,
-                decoration: const InputDecoration(labelText: 'Vendor'),
+                decoration: const InputDecoration(labelText: 'المورد'),
                 items: [
                   const DropdownMenuItem(
                     value: null,
-                    child: Text('Select Vendor'),
+                    child: Text('اختر المورد'),
                   ),
                   ...widget.vendors.map(
                     (vendor) => DropdownMenuItem(
@@ -262,14 +303,14 @@ class _PurchaseInvoiceFormDialogState extends State<PurchaseInvoiceFormDialog> {
               ),
               TextFormField(
                 initialValue: _totalAmount.toStringAsFixed(2),
-                decoration: const InputDecoration(labelText: 'Total Amount'),
+                decoration: const InputDecoration(labelText: 'المبلغ الإجمالي'),
                 keyboardType: TextInputType.number,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter total amount';
+                    return 'الرجاء إدخال المبلغ الإجمالي';
                   }
                   if (double.tryParse(value) == null) {
-                    return 'Please enter a valid number';
+                    return 'الرجاء إدخال رقم صحيح';
                   }
                   return null;
                 },
@@ -277,14 +318,14 @@ class _PurchaseInvoiceFormDialogState extends State<PurchaseInvoiceFormDialog> {
               ),
               TextFormField(
                 initialValue: _paidAmount.toStringAsFixed(2),
-                decoration: const InputDecoration(labelText: 'Paid Amount'),
+                decoration: const InputDecoration(labelText: 'المبلغ المدفوع'),
                 keyboardType: TextInputType.number,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter paid amount';
+                    return 'الرجاء إدخال المبلغ المدفوع';
                   }
                   if (double.tryParse(value) == null) {
-                    return 'Please enter a valid number';
+                    return 'الرجاء إدخال رقم صحيح';
                   }
                   return null;
                 },
@@ -299,7 +340,7 @@ class _PurchaseInvoiceFormDialogState extends State<PurchaseInvoiceFormDialog> {
               TextFormField(
                 initialValue: _remainingAmount.toStringAsFixed(2),
                 decoration: const InputDecoration(
-                  labelText: 'Remaining Amount',
+                  labelText: 'المبلغ المتبقي',
                 ),
                 keyboardType: TextInputType.number,
                 readOnly: true,
@@ -311,11 +352,11 @@ class _PurchaseInvoiceFormDialogState extends State<PurchaseInvoiceFormDialog> {
       actions: <Widget>[
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: const Text('إلغاء'),
         ),
         ElevatedButton(
           onPressed: _savePurchaseInvoice,
-          child: const Text('Save'),
+          child: const Text('حفظ'),
         ),
       ],
     );

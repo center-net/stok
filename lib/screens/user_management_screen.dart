@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:ipcam/database_helper.dart';
 import 'package:ipcam/models.dart';
 
+import 'package:ipcam/widgets/custom_notification.dart';
+
 class UserManagementScreen extends StatefulWidget {
   const UserManagementScreen({super.key});
 
@@ -35,14 +37,41 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     );
   }
 
-  void _deleteUser(int id) async {
+  void _performDeleteUser(int id) async {
     await DatabaseHelper().deleteUser(id);
     _loadUsers();
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('تم حذف المستخدم بنجاح!')),
+      CustomNotificationOverlay.show(
+        context,
+        'تم حذف المستخدم بنجاح!',
+        backgroundColor: Colors.red,
       );
     }
+  }
+
+  void _confirmDelete(int id, String name) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('تأكيد الحذف'),
+          content: Text('هل أنت متأكد أنك تريد حذف المستخدم: $name؟'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('إلغاء'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                _performDeleteUser(id);
+                Navigator.pop(context);
+              },
+              child: const Text('حذف'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -83,7 +112,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                             Icons.delete,
                             color: Theme.of(context).colorScheme.error,
                           ),
-                          onPressed: () => _deleteUser(user.id!),
+                          onPressed: () => _confirmDelete(user.id!, user.name),
                         ),
                       ],
                     ),
@@ -120,10 +149,12 @@ class _UserFormDialogState extends State<UserFormDialog> {
   late String _password;
   late String _role;
   String? _phoneNumber;
+  List<User> _allUsers = [];
 
   @override
   void initState() {
     super.initState();
+    _loadAllUsers();
     if (widget.user != null) {
       _name = widget.user!.name;
       _username = widget.user!.username;
@@ -137,6 +168,14 @@ class _UserFormDialogState extends State<UserFormDialog> {
       _role = 'customer'; // Default role
       _phoneNumber = '';
     }
+  }
+
+  Future<void> _loadAllUsers() async {
+    final db = DatabaseHelper();
+    final usersMap = await db.getUsers();
+    setState(() {
+      _allUsers = usersMap.map((e) => User.fromMap(e)).toList();
+    });
   }
 
   void _saveUser() async {
@@ -155,8 +194,20 @@ class _UserFormDialogState extends State<UserFormDialog> {
 
       if (user.id == null) {
         await db.insertUser(user.toMap());
+        if (mounted) {
+          CustomNotificationOverlay.show(
+            context,
+            'تم إضافة المستخدم بنجاح!',
+          );
+        }
       } else {
         await db.updateUser(user.toMap());
+        if (mounted) {
+          CustomNotificationOverlay.show(
+            context,
+            'تم تعديل المستخدم بنجاح!',
+          );
+        }
       }
       widget.onSave();
       if (mounted) {
@@ -192,6 +243,11 @@ class _UserFormDialogState extends State<UserFormDialog> {
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'الرجاء إدخال اسم المستخدم';
+                  }
+                  // Check for uniqueness locally
+                  if (_allUsers.any((user) =>
+                      user.username == value && user.id != widget.user?.id)) {
+                    return 'اسم المستخدم موجود بالفعل!';
                   }
                   return null;
                 },
@@ -229,6 +285,23 @@ class _UserFormDialogState extends State<UserFormDialog> {
                 initialValue: _phoneNumber,
                 decoration: const InputDecoration(labelText: 'رقم الهاتف'),
                 keyboardType: TextInputType.phone,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return null; // Phone number is optional
+                  }
+                  if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
+                    return 'الرجاء إدخال أرقام فقط';
+                  }
+                  if (value.length != 10) {
+                    return 'يجب أن يتكون رقم الهاتف من 10 أرقام';
+                  }
+                  // Check for uniqueness locally
+                  if (_allUsers.any((user) =>
+                      user.phoneNumber == value && user.id != widget.user?.id)) {
+                    return 'رقم الهاتف موجود بالفعل!';
+                  }
+                  return null;
+                },
                 onSaved: (value) => _phoneNumber = value,
               ),
             ],

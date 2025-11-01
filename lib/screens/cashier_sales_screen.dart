@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ipcam/database_helper.dart';
 import 'package:ipcam/models.dart';
 import 'dart:io';
+import 'package:ipcam/widgets/custom_notification.dart';
 
 class CashierSalesScreen extends StatefulWidget {
   const CashierSalesScreen({super.key});
@@ -18,6 +19,14 @@ class _CashierSalesScreenState extends State<CashierSalesScreen> {
   double _totalAmount = 0.0;
   double _paidAmount = 0.0;
   double _remainingAmount = 0.0;
+
+  String _getProductName(int productId) {
+    try {
+      return _availableProducts.firstWhere((product) => product.id == productId).name;
+    } catch (e) {
+      return 'منتج غير معروف';
+    }
+  }
 
   @override
   void initState() {
@@ -106,8 +115,10 @@ class _CashierSalesScreenState extends State<CashierSalesScreen> {
 
   Future<void> _finalizeSale() async {
     if (_currentSaleDetails.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please add products to the sale first.')),
+      CustomNotificationOverlay.show(
+        context,
+        'الرجاء إضافة منتجات إلى الفاتورة أولاً.',
+        backgroundColor: Colors.red,
       );
       return;
     }
@@ -132,8 +143,9 @@ class _CashierSalesScreenState extends State<CashierSalesScreen> {
 
     _clearSale();
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Sale finalized successfully!')),
+      CustomNotificationOverlay.show(
+        context,
+        'تم إنهاء عملية البيع بنجاح!',
       );
     }
   }
@@ -142,7 +154,7 @@ class _CashierSalesScreenState extends State<CashierSalesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Cashier Sales Panel'),
+        title: const Text('لوحة مبيعات الكاشير'),
         backgroundColor: Theme.of(context).colorScheme.primary,
       ),
       body: Column(
@@ -152,7 +164,7 @@ class _CashierSalesScreenState extends State<CashierSalesScreen> {
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                labelText: 'Search Products (Name, Barcode, Code)',
+                labelText: 'البحث عن منتجات (الاسم، الباركود، الرمز)',
                 border: const OutlineInputBorder(),
                 prefixIcon: Icon(
                   Icons.search,
@@ -204,9 +216,9 @@ class _CashierSalesScreenState extends State<CashierSalesScreen> {
                           ),
                         ),
                         Text(
-                          'Price: \$${product.salePrice1.toStringAsFixed(2)}',
+                          'السعر: د.ل${product.salePrice1.toStringAsFixed(2)}',
                         ),
-                        Text('Stock: ${product.quantityInStock}'),
+                        Text('المخزون: ${product.quantityInStock}'),
                       ],
                     ),
                   ),
@@ -222,13 +234,13 @@ class _CashierSalesScreenState extends State<CashierSalesScreen> {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    'Current Sale:',
+                    'الفاتورة الحالية:',
                     style: Theme.of(context).textTheme.headlineSmall,
                   ),
                 ),
                 const SizedBox(height: 8.0),
                 _currentSaleDetails.isEmpty
-                    ? const Text('No items in sale.')
+                    ? const Text('لا توجد عناصر في الفاتورة.')
                     : ListView.builder(
                         shrinkWrap: true,
                         itemCount: _currentSaleDetails.length,
@@ -240,7 +252,7 @@ class _CashierSalesScreenState extends State<CashierSalesScreen> {
                           return ListTile(
                             title: Text('${product.name} x ${detail.quantity}'),
                             subtitle: Text(
-                              'Price: \$${detail.salePrice.toStringAsFixed(2)}',
+                              'السعر: د.ل${detail.salePrice.toStringAsFixed(2)}',
                             ),
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -269,14 +281,14 @@ class _CashierSalesScreenState extends State<CashierSalesScreen> {
                       ),
                 const SizedBox(height: 16.0),
                 Text(
-                  'Total: \$${_totalAmount.toStringAsFixed(2)}',
+                  'الإجمالي: د.ل${_totalAmount.toStringAsFixed(2)}',
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 TextField(
-                  decoration: const InputDecoration(labelText: 'Paid Amount'),
+                  decoration: const InputDecoration(labelText: 'المبلغ المدفوع'),
                   keyboardType: TextInputType.number,
                   onChanged: (value) {
                     setState(() {
@@ -286,7 +298,7 @@ class _CashierSalesScreenState extends State<CashierSalesScreen> {
                   },
                 ),
                 Text(
-                  'Remaining: \$${_remainingAmount.toStringAsFixed(2)}',
+                  'المتبقي: د.ل${_remainingAmount.toStringAsFixed(2)}',
                   style: const TextStyle(fontSize: 18),
                 ),
                 const SizedBox(height: 16.0),
@@ -303,7 +315,7 @@ class _CashierSalesScreenState extends State<CashierSalesScreen> {
                           context,
                         ).colorScheme.onErrorContainer,
                       ),
-                      child: const Text('Clear Sale'),
+                      child: const Text('مسح الفاتورة'),
                     ),
                     ElevatedButton(
                       onPressed: _finalizeSale,
@@ -313,7 +325,7 @@ class _CashierSalesScreenState extends State<CashierSalesScreen> {
                           context,
                         ).colorScheme.onPrimary,
                       ),
-                      child: const Text('Finalize Sale'),
+                      child: const Text('إنهاء الفاتورة'),
                     ),
                   ],
                 ),
