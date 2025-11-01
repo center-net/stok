@@ -21,8 +21,23 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('الصفحة الرئيسية'),
+        title: const Text(
+          'الصفحة الرئيسية',
+          style: TextStyle(color: Colors.white),
+        ),
         backgroundColor: Theme.of(context).primaryColor,
+        iconTheme: const IconThemeData(color: Colors.white),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.white),
+            onPressed: () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginPage()),
+              );
+            },
+          ),
+        ],
       ),
       drawer: Drawer(
         child: ListView(
@@ -197,26 +212,11 @@ class HomePage extends StatelessWidget {
               },
             ),
             const Divider(), // Add a divider for better separation
-            ListTile(
-              leading: const Icon(Icons.logout),
-              title: const Text('تسجيل الخروج'),
-              onTap: () {
-                Navigator.pop(context); // Close the drawer
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const LoginPage(),
-                  ),
-                );
-              },
-            ),
           ],
         ),
       ),
       body: const Center(
-        child: Text(
-          'مرحباً بك في نظام إدارة المتجر! اختر خيارًا من القائمة.',
-        ),
+        child: Text('مرحباً بك في نظام إدارة المتجر! اختر خيارًا من القائمة.'),
       ),
     );
   }
