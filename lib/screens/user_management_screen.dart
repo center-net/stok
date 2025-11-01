@@ -150,6 +150,7 @@ class _UserFormDialogState extends State<UserFormDialog> {
   late String _role;
   String? _phoneNumber;
   List<User> _allUsers = [];
+  bool _isPasswordVisible = false;
 
   @override
   void initState() {
@@ -255,8 +256,20 @@ class _UserFormDialogState extends State<UserFormDialog> {
               ),
               TextFormField(
                 initialValue: _password,
-                decoration: const InputDecoration(labelText: 'كلمة المرور'),
-                obscureText: true,
+                decoration: InputDecoration(
+                  labelText: 'كلمة المرور',
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _isPasswordVisible = !_isPasswordVisible;
+                      });
+                    },
+                  ),
+                ),
+                obscureText: !_isPasswordVisible,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'الرجاء إدخال كلمة المرور';

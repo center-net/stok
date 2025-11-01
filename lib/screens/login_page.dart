@@ -13,6 +13,8 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  bool _isLoading = false;
+  bool _isPasswordVisible = false;
 
   @override
   void initState() {
@@ -43,13 +45,10 @@ class _LoginPageState extends State<LoginPage> {
 
     if (user != null) {
       print('LoginPage: Login successful for user: ${user['username']}');
-      CustomNotificationOverlay.show(
-        context,
-        'مرحباً، ${user['name']}',
-      );
+      CustomNotificationOverlay.show(context, 'مرحباً، ${user['name']}');
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const HomePage()),
+        MaterialPageRoute(builder: (context) => HomePage(user: user)),
       );
     } else {
       print('LoginPage: Login failed for username: $username');
@@ -86,10 +85,20 @@ class _LoginPageState extends State<LoginPage> {
                 const SizedBox(height: 16.0),
                 TextField(
                   controller: _passwordController,
-                  obscureText: true,
-                  decoration: const InputDecoration(
+                  obscureText: !_isPasswordVisible,
+                  decoration: InputDecoration(
                     labelText: 'كلمة المرور',
-                    border: OutlineInputBorder(),
+                    border: const OutlineInputBorder(),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _isPasswordVisible = !_isPasswordVisible;
+                        });
+                      },
+                    ),
                   ),
                 ),
                 const SizedBox(height: 24.0),

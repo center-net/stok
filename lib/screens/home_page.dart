@@ -10,9 +10,12 @@ import 'package:ipcam/screens/sale_invoice_screen.dart';
 import 'package:ipcam/screens/purchase_return_screen.dart';
 import 'package:ipcam/screens/sale_return_screen.dart';
 import 'package:ipcam/screens/serial_management_screen.dart';
+import 'package:ipcam/screens/role_management_screen.dart';
+import 'package:ipcam/screens/login_page.dart';
 
 class HomePage extends StatelessWidget {
-  const HomePage({super.key});
+  final Map<String, dynamic> user;
+  const HomePage({super.key, required this.user});
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +33,7 @@ class HomePage extends StatelessWidget {
                 color: Theme.of(context).colorScheme.primary,
               ),
               child: Text(
-                'قائمة الإدارة',
+                'مرحباً، ${user['username']}',
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.onPrimary,
                   fontSize: 24,
@@ -176,6 +179,33 @@ class HomePage extends StatelessWidget {
                   context,
                   MaterialPageRoute(
                     builder: (context) => const CashierSalesScreen(),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.security),
+              title: const Text('إدارة الأدوار والصلاحيات'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const RoleManagementScreen(),
+                  ),
+                );
+              },
+            ),
+            const Divider(), // Add a divider for better separation
+            ListTile(
+              leading: const Icon(Icons.logout),
+              title: const Text('تسجيل الخروج'),
+              onTap: () {
+                Navigator.pop(context); // Close the drawer
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const LoginPage(),
                   ),
                 );
               },
