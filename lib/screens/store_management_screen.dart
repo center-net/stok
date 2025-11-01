@@ -101,41 +101,113 @@ class _StoreManagementScreenState extends State<StoreManagementScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('إدارة المتاجر'),
-        backgroundColor: Theme.of(context).colorScheme.primary,
+        title: const Text(
+          'إدارة المتاجر',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.blueAccent, Colors.purpleAccent],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
+        iconTheme: const IconThemeData(color: Colors.white),
+        elevation: 4,
       ),
       body: _stores.isEmpty
-          ? const Center(child: Text('لم يتم العثور على متاجر. أضف متجرًا جديدًا!'))
+          ? Center(
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Colors.white, Color(0xFFE0E0E0)],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.shade300,
+                      blurRadius: 10,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
+                ),
+                child: const Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.store, size: 80, color: Colors.blueGrey),
+                    SizedBox(height: 20),
+                    Text(
+                      'لم يتم العثور على متاجر.',
+                      style: TextStyle(
+                        fontSize: 20,
+                        color: Colors.blueGrey,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    SizedBox(height: 10),
+                    Text(
+                      'أضف متجرًا جديدًا!',
+                      style: TextStyle(fontSize: 16, color: Colors.grey),
+                    ),
+                  ],
+                ),
+              ),
+            )
           : ListView.builder(
               itemCount: _stores.length,
               itemBuilder: (context, index) {
                 final store = _stores[index];
-                return Card(
+                return Container(
                   margin: const EdgeInsets.symmetric(
                     horizontal: 16.0,
                     vertical: 8.0,
                   ),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Colors.white, Color(0xFFF5F5F5)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.shade300,
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
                   child: ListTile(
-                    title: Text(store.name),
+                    title: Text(
+                      store.name,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
                     subtitle: Text(
                       'رقم المتجر: ${store.storeNumber} | المدير: ${_getManagerName(store.managerId)}',
+                      style: const TextStyle(color: Colors.grey),
                     ),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
-                          icon: Icon(
-                            Icons.edit,
-                            color: Theme.of(context).colorScheme.secondary,
-                          ),
+                          icon: const Icon(Icons.edit, color: Colors.green),
                           onPressed: () => _showStoreForm(store: store),
                         ),
                         IconButton(
-                          icon: Icon(
+                          icon: const Icon(
                             Icons.delete,
-                            color: Theme.of(context).colorScheme.error,
+                            color: Colors.redAccent,
                           ),
-                          onPressed: () => _confirmDelete(store.id!, store.name),
+                          onPressed: () =>
+                              _confirmDelete(store.id!, store.name),
                         ),
                       ],
                     ),
@@ -214,18 +286,12 @@ class _StoreFormDialogState extends State<StoreFormDialog> {
       if (store.id == null) {
         await db.insertStore(store.toMap());
         if (mounted) {
-          CustomNotificationOverlay.show(
-            context,
-            'تم إضافة المتجر بنجاح!',
-          );
+          CustomNotificationOverlay.show(context, 'تم إضافة المتجر بنجاح!');
         }
       } else {
         await db.updateStore(store.toMap());
         if (mounted) {
-          CustomNotificationOverlay.show(
-            context,
-            'تم تعديل المتجر بنجاح!',
-          );
+          CustomNotificationOverlay.show(context, 'تم تعديل المتجر بنجاح!');
         }
       }
       widget.onSave();

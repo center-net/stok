@@ -25,7 +25,12 @@ class DatabaseHelper {
     String databasesPath = await getDatabasesPath();
     String path = join(databasesPath, 'ipcam.db');
 
-    return await openDatabase(path, version: 1, onCreate: _onCreate);
+    return await openDatabase(
+      path,
+      version: 3,
+      onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
+    );
   }
 
   Future<void> _onCreate(Database db, int version) async {
@@ -52,24 +57,52 @@ class DatabaseHelper {
     }
   }
 
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 3) {
+      // Create the Roles table if it doesn't exist
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS Roles (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL UNIQUE,
+          description TEXT
+        );
+      ''');
+    }
+  }
+
   Future<int> insertUser(Map<String, dynamic> user) async {
     Database db = await database;
-    return await db.insert('Users', user);
+    try {
+      return await db.insert('Users', user);
+    } catch (e) {
+      print('Error inserting user: $e');
+      rethrow;
+    }
   }
 
   Future<int> updateUser(Map<String, dynamic> user) async {
     Database db = await database;
-    return await db.update(
-      'Users',
-      user,
-      where: 'id = ?',
-      whereArgs: [user['id']],
-    );
+    try {
+      return await db.update(
+        'Users',
+        user,
+        where: 'id = ?',
+        whereArgs: [user['id']],
+      );
+    } catch (e) {
+      print('Error updating user: $e');
+      rethrow;
+    }
   }
 
   Future<int> deleteUser(int id) async {
     Database db = await database;
-    return await db.delete('Users', where: 'id = ?', whereArgs: [id]);
+    try {
+      return await db.delete('Users', where: 'id = ?', whereArgs: [id]);
+    } catch (e) {
+      print('Error deleting user: $e');
+      rethrow;
+    }
   }
 
   Future<Map<String, dynamic>?> authenticateUser(
@@ -77,14 +110,19 @@ class DatabaseHelper {
     String password,
   ) async {
     Database db = await database;
-    List<Map<String, dynamic>> users = await db.query(
-      'Users',
-      where: 'username = ? AND password = ?',
-      whereArgs: [username, User.hashPassword(password)],
-    );
-    if (users.isNotEmpty) {
-      return users.first;
-    } else {
+    try {
+      List<Map<String, dynamic>> users = await db.query(
+        'Users',
+        where: 'username = ? AND password = ?',
+        whereArgs: [username, User.hashPassword(password)],
+      );
+      if (users.isNotEmpty) {
+        return users.first;
+      } else {
+        return null;
+      }
+    } catch (e) {
+      print('Error authenticating user: $e');
       return null;
     }
   }
@@ -111,22 +149,37 @@ class DatabaseHelper {
   // Vendor CRUD Operations
   Future<int> insertVendor(Map<String, dynamic> vendor) async {
     Database db = await database;
-    return await db.insert('Vendors', vendor);
+    try {
+      return await db.insert('Vendors', vendor);
+    } catch (e) {
+      print('Error inserting vendor: $e');
+      rethrow;
+    }
   }
 
   Future<int> updateVendor(Map<String, dynamic> vendor) async {
     Database db = await database;
-    return await db.update(
-      'Vendors',
-      vendor,
-      where: 'id = ?',
-      whereArgs: [vendor['id']],
-    );
+    try {
+      return await db.update(
+        'Vendors',
+        vendor,
+        where: 'id = ?',
+        whereArgs: [vendor['id']],
+      );
+    } catch (e) {
+      print('Error updating vendor: $e');
+      rethrow;
+    }
   }
 
   Future<int> deleteVendor(int id) async {
     Database db = await database;
-    return await db.delete('Vendors', where: 'id = ?', whereArgs: [id]);
+    try {
+      return await db.delete('Vendors', where: 'id = ?', whereArgs: [id]);
+    } catch (e) {
+      print('Error deleting vendor: $e');
+      rethrow;
+    }
   }
 
   Future<List<Map<String, dynamic>>> getVendors() async {
@@ -151,22 +204,37 @@ class DatabaseHelper {
   // Store CRUD Operations
   Future<int> insertStore(Map<String, dynamic> store) async {
     Database db = await database;
-    return await db.insert('Stores', store);
+    try {
+      return await db.insert('Stores', store);
+    } catch (e) {
+      print('Error inserting store: $e');
+      rethrow;
+    }
   }
 
   Future<int> updateStore(Map<String, dynamic> store) async {
     Database db = await database;
-    return await db.update(
-      'Stores',
-      store,
-      where: 'id = ?',
-      whereArgs: [store['id']],
-    );
+    try {
+      return await db.update(
+        'Stores',
+        store,
+        where: 'id = ?',
+        whereArgs: [store['id']],
+      );
+    } catch (e) {
+      print('Error updating store: $e');
+      rethrow;
+    }
   }
 
   Future<int> deleteStore(int id) async {
     Database db = await database;
-    return await db.delete('Stores', where: 'id = ?', whereArgs: [id]);
+    try {
+      return await db.delete('Stores', where: 'id = ?', whereArgs: [id]);
+    } catch (e) {
+      print('Error deleting store: $e');
+      rethrow;
+    }
   }
 
   Future<List<Map<String, dynamic>>> getStores() async {
@@ -191,22 +259,37 @@ class DatabaseHelper {
   // Category CRUD Operations
   Future<int> insertCategory(Map<String, dynamic> category) async {
     Database db = await database;
-    return await db.insert('Categories', category);
+    try {
+      return await db.insert('Categories', category);
+    } catch (e) {
+      print('Error inserting category: $e');
+      rethrow;
+    }
   }
 
   Future<int> updateCategory(Map<String, dynamic> category) async {
     Database db = await database;
-    return await db.update(
-      'Categories',
-      category,
-      where: 'id = ?',
-      whereArgs: [category['id']],
-    );
+    try {
+      return await db.update(
+        'Categories',
+        category,
+        where: 'id = ?',
+        whereArgs: [category['id']],
+      );
+    } catch (e) {
+      print('Error updating category: $e');
+      rethrow;
+    }
   }
 
   Future<int> deleteCategory(int id) async {
     Database db = await database;
-    return await db.delete('Categories', where: 'id = ?', whereArgs: [id]);
+    try {
+      return await db.delete('Categories', where: 'id = ?', whereArgs: [id]);
+    } catch (e) {
+      print('Error deleting category: $e');
+      rethrow;
+    }
   }
 
   Future<List<Map<String, dynamic>>> getCategories() async {
@@ -231,22 +314,37 @@ class DatabaseHelper {
   // Product CRUD Operations
   Future<int> insertProduct(Map<String, dynamic> product) async {
     Database db = await database;
-    return await db.insert('Products', product);
+    try {
+      return await db.insert('Products', product);
+    } catch (e) {
+      print('Error inserting product: $e');
+      rethrow;
+    }
   }
 
   Future<int> updateProduct(Map<String, dynamic> product) async {
     Database db = await database;
-    return await db.update(
-      'Products',
-      product,
-      where: 'id = ?',
-      whereArgs: [product['id']],
-    );
+    try {
+      return await db.update(
+        'Products',
+        product,
+        where: 'id = ?',
+        whereArgs: [product['id']],
+      );
+    } catch (e) {
+      print('Error updating product: $e');
+      rethrow;
+    }
   }
 
   Future<int> deleteProduct(int id) async {
     Database db = await database;
-    return await db.delete('Products', where: 'id = ?', whereArgs: [id]);
+    try {
+      return await db.delete('Products', where: 'id = ?', whereArgs: [id]);
+    } catch (e) {
+      print('Error deleting product: $e');
+      rethrow;
+    }
   }
 
   Future<List<Map<String, dynamic>>> getProducts() async {
@@ -279,26 +377,41 @@ class DatabaseHelper {
   // PurchaseInvoice CRUD Operations
   Future<int> insertPurchaseInvoice(Map<String, dynamic> invoice) async {
     Database db = await database;
-    return await db.insert('PurchaseInvoices', invoice);
+    try {
+      return await db.insert('PurchaseInvoices', invoice);
+    } catch (e) {
+      print('Error inserting purchase invoice: $e');
+      rethrow;
+    }
   }
 
   Future<int> updatePurchaseInvoice(Map<String, dynamic> invoice) async {
     Database db = await database;
-    return await db.update(
-      'PurchaseInvoices',
-      invoice,
-      where: 'id = ?',
-      whereArgs: [invoice['id']],
-    );
+    try {
+      return await db.update(
+        'PurchaseInvoices',
+        invoice,
+        where: 'id = ?',
+        whereArgs: [invoice['id']],
+      );
+    } catch (e) {
+      print('Error updating purchase invoice: $e');
+      rethrow;
+    }
   }
 
   Future<int> deletePurchaseInvoice(int id) async {
     Database db = await database;
-    return await db.delete(
-      'PurchaseInvoices',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    try {
+      return await db.delete(
+        'PurchaseInvoices',
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+    } catch (e) {
+      print('Error deleting purchase invoice: $e');
+      rethrow;
+    }
   }
 
   Future<List<Map<String, dynamic>>> getPurchaseInvoices() async {
@@ -323,48 +436,67 @@ class DatabaseHelper {
   // PurchaseInvoiceDetail CRUD Operations
   Future<int> insertPurchaseInvoiceDetail(Map<String, dynamic> detail) async {
     final db = await database;
-    final id = await db.insert('PurchaseInvoiceDetails', detail);
-    await updateProductQuantity(
-      detail['product_id'] as int,
-      detail['quantity'] as int,
-    );
-    return id;
-  }
-
-  Future<int> updatePurchaseInvoiceDetail(Map<String, dynamic> detail) async {
-    final db = await database;
-    // Get old quantity to adjust stock correctly
-    final oldDetail = await getPurchaseInvoiceDetailById(detail['id'] as int);
-    if (oldDetail != null) {
-      await updateProductQuantity(
-        oldDetail.productId,
-        -(oldDetail.quantity),
-      ); // Remove old quantity
-      await updateProductQuantity(
-        detail['product_id'] as int,
-        detail['quantity'] as int,
-      ); // Add new quantity
-    } else {
+    try {
+      final id = await db.insert('PurchaseInvoiceDetails', detail);
       await updateProductQuantity(
         detail['product_id'] as int,
         detail['quantity'] as int,
       );
+      return id;
+    } catch (e) {
+      print('Error inserting purchase invoice detail: $e');
+      rethrow;
     }
-    return await db.update(
-      'PurchaseInvoiceDetails',
-      detail,
-      where: 'id = ?',
-      whereArgs: [detail['id']],
-    );
+  }
+
+  Future<int> updatePurchaseInvoiceDetail(Map<String, dynamic> detail) async {
+    final db = await database;
+    try {
+      // Get old quantity to adjust stock correctly
+      final oldDetail = await getPurchaseInvoiceDetailById(detail['id'] as int);
+      if (oldDetail != null) {
+        await updateProductQuantity(
+          oldDetail.productId,
+          -(oldDetail.quantity),
+        ); // Remove old quantity
+        await updateProductQuantity(
+          detail['product_id'] as int,
+          detail['quantity'] as int,
+        ); // Add new quantity
+      } else {
+        await updateProductQuantity(
+          detail['product_id'] as int,
+          detail['quantity'] as int,
+        );
+      }
+      return await db.update(
+        'PurchaseInvoiceDetails',
+        detail,
+        where: 'id = ?',
+        whereArgs: [detail['id']],
+      );
+    } catch (e) {
+      print('Error updating purchase invoice detail: $e');
+      rethrow;
+    }
   }
 
   Future<void> deletePurchaseInvoiceDetail(int id) async {
     final db = await database;
-    final detail = await getPurchaseInvoiceDetailById(id);
-    if (detail != null) {
-      await updateProductQuantity(detail.productId, -detail.quantity);
+    try {
+      final detail = await getPurchaseInvoiceDetailById(id);
+      if (detail != null) {
+        await updateProductQuantity(detail.productId, -detail.quantity);
+      }
+      await db.delete(
+        'PurchaseInvoiceDetails',
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+    } catch (e) {
+      print('Error deleting purchase invoice detail: $e');
+      rethrow;
     }
-    await db.delete('PurchaseInvoiceDetails', where: 'id = ?', whereArgs: [id]);
   }
 
   Future<List<Map<String, dynamic>>> getPurchaseInvoiceDetails(
@@ -394,22 +526,37 @@ class DatabaseHelper {
   // SaleInvoice CRUD Operations
   Future<int> insertSaleInvoice(Map<String, dynamic> invoice) async {
     Database db = await database;
-    return await db.insert('SaleInvoices', invoice);
+    try {
+      return await db.insert('SaleInvoices', invoice);
+    } catch (e) {
+      print('Error inserting sale invoice: $e');
+      rethrow;
+    }
   }
 
   Future<int> updateSaleInvoice(Map<String, dynamic> invoice) async {
     Database db = await database;
-    return await db.update(
-      'SaleInvoices',
-      invoice,
-      where: 'id = ?',
-      whereArgs: [invoice['id']],
-    );
+    try {
+      return await db.update(
+        'SaleInvoices',
+        invoice,
+        where: 'id = ?',
+        whereArgs: [invoice['id']],
+      );
+    } catch (e) {
+      print('Error updating sale invoice: $e');
+      rethrow;
+    }
   }
 
   Future<int> deleteSaleInvoice(int id) async {
     Database db = await database;
-    return await db.delete('SaleInvoices', where: 'id = ?', whereArgs: [id]);
+    try {
+      return await db.delete('SaleInvoices', where: 'id = ?', whereArgs: [id]);
+    } catch (e) {
+      print('Error deleting sale invoice: $e');
+      rethrow;
+    }
   }
 
   Future<List<Map<String, dynamic>>> getSaleInvoices() async {
@@ -433,51 +580,66 @@ class DatabaseHelper {
   // SaleInvoiceDetail CRUD Operations
   Future<int> insertSaleInvoiceDetail(Map<String, dynamic> detail) async {
     final db = await database;
-    final id = await db.insert('SaleInvoiceDetails', detail);
-    await updateProductQuantity(
-      detail['product_id'] as int,
-      -(detail['quantity'] as int),
-    ); // Decrease stock for sale
-    return id;
+    try {
+      final id = await db.insert('SaleInvoiceDetails', detail);
+      await updateProductQuantity(
+        detail['product_id'] as int,
+        -(detail['quantity'] as int),
+      ); // Decrease stock for sale
+      return id;
+    } catch (e) {
+      print('Error inserting sale invoice detail: $e');
+      rethrow;
+    }
   }
 
   Future<int> updateSaleInvoiceDetail(Map<String, dynamic> detail) async {
     final db = await database;
-    // Get old quantity to adjust stock correctly
-    final oldDetail = await getSaleInvoiceDetailById(detail['id'] as int);
-    if (oldDetail != null) {
-      await updateProductQuantity(
-        oldDetail.productId,
-        oldDetail.quantity,
-      ); // Re-add old quantity
-      await updateProductQuantity(
-        detail['product_id'] as int,
-        -(detail['quantity'] as int),
-      ); // Remove new quantity
-    } else {
-      await updateProductQuantity(
-        detail['product_id'] as int,
-        -(detail['quantity'] as int),
+    try {
+      // Get old quantity to adjust stock correctly
+      final oldDetail = await getSaleInvoiceDetailById(detail['id'] as int);
+      if (oldDetail != null) {
+        await updateProductQuantity(
+          oldDetail.productId,
+          oldDetail.quantity,
+        ); // Re-add old quantity
+        await updateProductQuantity(
+          detail['product_id'] as int,
+          -(detail['quantity'] as int),
+        ); // Remove new quantity
+      } else {
+        await updateProductQuantity(
+          detail['product_id'] as int,
+          -(detail['quantity'] as int),
+        );
+      }
+      return await db.update(
+        'SaleInvoiceDetails',
+        detail,
+        where: 'id = ?',
+        whereArgs: [detail['id']],
       );
+    } catch (e) {
+      print('Error updating sale invoice detail: $e');
+      rethrow;
     }
-    return await db.update(
-      'SaleInvoiceDetails',
-      detail,
-      where: 'id = ?',
-      whereArgs: [detail['id']],
-    );
   }
 
   Future<void> deleteSaleInvoiceDetail(int id) async {
     final db = await database;
-    final detail = await getSaleInvoiceDetailById(id);
-    if (detail != null) {
-      await updateProductQuantity(
-        detail.productId,
-        detail.quantity,
-      ); // Return to stock
+    try {
+      final detail = await getSaleInvoiceDetailById(id);
+      if (detail != null) {
+        await updateProductQuantity(
+          detail.productId,
+          detail.quantity,
+        ); // Return to stock
+      }
+      await db.delete('SaleInvoiceDetails', where: 'id = ?', whereArgs: [id]);
+    } catch (e) {
+      print('Error deleting sale invoice detail: $e');
+      rethrow;
     }
-    await db.delete('SaleInvoiceDetails', where: 'id = ?', whereArgs: [id]);
   }
 
   Future<List<Map<String, dynamic>>> getSaleInvoiceDetails(
@@ -507,22 +669,37 @@ class DatabaseHelper {
   // Serial CRUD Operations
   Future<int> insertSerial(Map<String, dynamic> serial) async {
     final db = await database;
-    return await db.insert('Serials', serial);
+    try {
+      return await db.insert('Serials', serial);
+    } catch (e) {
+      print('Error inserting serial: $e');
+      rethrow;
+    }
   }
 
   Future<int> updateSerial(Map<String, dynamic> serial) async {
     final db = await database;
-    return await db.update(
-      'Serials',
-      serial,
-      where: 'id = ?',
-      whereArgs: [serial['id']],
-    );
+    try {
+      return await db.update(
+        'Serials',
+        serial,
+        where: 'id = ?',
+        whereArgs: [serial['id']],
+      );
+    } catch (e) {
+      print('Error updating serial: $e');
+      rethrow;
+    }
   }
 
   Future<void> deleteSerial(int id) async {
     final db = await database;
-    await db.delete('Serials', where: 'id = ?', whereArgs: [id]);
+    try {
+      await db.delete('Serials', where: 'id = ?', whereArgs: [id]);
+    } catch (e) {
+      print('Error deleting serial: $e');
+      rethrow;
+    }
   }
 
   Future<List<Map<String, dynamic>>> getSerials() async {
@@ -575,50 +752,67 @@ class DatabaseHelper {
   // PurchaseReturn CRUD Operations
   Future<int> insertPurchaseReturn(Map<String, dynamic> purchaseReturn) async {
     final db = await database;
-    final id = await db.insert('PurchaseReturns', purchaseReturn);
-    await updateProductQuantity(
-      purchaseReturn['product_id'] as int,
-      -(purchaseReturn['quantity'] as int),
-    ); // Decrease stock for returned purchase
-    return id;
+    try {
+      final id = await db.insert('PurchaseReturns', purchaseReturn);
+      await updateProductQuantity(
+        purchaseReturn['product_id'] as int,
+        -(purchaseReturn['quantity'] as int),
+      ); // Decrease stock for returned purchase
+      return id;
+    } catch (e) {
+      print('Error inserting purchase return: $e');
+      rethrow;
+    }
   }
 
   Future<int> updatePurchaseReturn(Map<String, dynamic> purchaseReturn) async {
     final db = await database;
-    final oldReturn = await getPurchaseReturnById(purchaseReturn['id'] as int);
-    if (oldReturn != null) {
-      await updateProductQuantity(
-        oldReturn.productId,
-        oldReturn.quantity,
-      ); // Re-add old quantity
-      await updateProductQuantity(
-        purchaseReturn['product_id'] as int,
-        -(purchaseReturn['quantity'] as int),
-      ); // Decrease new quantity
-    } else {
-      await updateProductQuantity(
-        purchaseReturn['product_id'] as int,
-        -(purchaseReturn['quantity'] as int),
+    try {
+      final oldReturn = await getPurchaseReturnById(
+        purchaseReturn['id'] as int,
       );
+      if (oldReturn != null) {
+        await updateProductQuantity(
+          oldReturn.productId,
+          oldReturn.quantity,
+        ); // Re-add old quantity
+        await updateProductQuantity(
+          purchaseReturn['product_id'] as int,
+          -(purchaseReturn['quantity'] as int),
+        ); // Decrease new quantity
+      } else {
+        await updateProductQuantity(
+          purchaseReturn['product_id'] as int,
+          -(purchaseReturn['quantity'] as int),
+        );
+      }
+      return await db.update(
+        'PurchaseReturns',
+        purchaseReturn,
+        where: 'id = ?',
+        whereArgs: [purchaseReturn['id']],
+      );
+    } catch (e) {
+      print('Error updating purchase return: $e');
+      rethrow;
     }
-    return await db.update(
-      'PurchaseReturns',
-      purchaseReturn,
-      where: 'id = ?',
-      whereArgs: [purchaseReturn['id']],
-    );
   }
 
   Future<void> deletePurchaseReturn(int id) async {
     final db = await database;
-    final pr = await getPurchaseReturnById(id);
-    if (pr != null) {
-      await updateProductQuantity(
-        pr.productId,
-        pr.quantity,
-      ); // Increase stock from deleted return
+    try {
+      final pr = await getPurchaseReturnById(id);
+      if (pr != null) {
+        await updateProductQuantity(
+          pr.productId,
+          pr.quantity,
+        ); // Increase stock from deleted return
+      }
+      await db.delete('PurchaseReturns', where: 'id = ?', whereArgs: [id]);
+    } catch (e) {
+      print('Error deleting purchase return: $e');
+      rethrow;
     }
-    await db.delete('PurchaseReturns', where: 'id = ?', whereArgs: [id]);
   }
 
   Future<List<Map<String, dynamic>>> getPurchaseReturns() async {
@@ -642,50 +836,65 @@ class DatabaseHelper {
   // SaleReturn CRUD Operations
   Future<int> insertSaleReturn(Map<String, dynamic> saleReturn) async {
     final db = await database;
-    final id = await db.insert('SaleReturns', saleReturn);
-    await updateProductQuantity(
-      saleReturn['product_id'] as int,
-      saleReturn['quantity'] as int,
-    ); // Increase stock for returned sale
-    return id;
+    try {
+      final id = await db.insert('SaleReturns', saleReturn);
+      await updateProductQuantity(
+        saleReturn['product_id'] as int,
+        saleReturn['quantity'] as int,
+      ); // Increase stock for returned sale
+      return id;
+    } catch (e) {
+      print('Error inserting sale return: $e');
+      rethrow;
+    }
   }
 
   Future<int> updateSaleReturn(Map<String, dynamic> saleReturn) async {
     final db = await database;
-    final oldReturn = await getSaleReturnById(saleReturn['id'] as int);
-    if (oldReturn != null) {
-      await updateProductQuantity(
-        oldReturn.productId,
-        -(oldReturn.quantity),
-      ); // Remove old quantity
-      await updateProductQuantity(
-        saleReturn['product_id'] as int,
-        saleReturn['quantity'] as int,
-      ); // Add new quantity
-    } else {
-      await updateProductQuantity(
-        saleReturn['product_id'] as int,
-        saleReturn['quantity'] as int,
+    try {
+      final oldReturn = await getSaleReturnById(saleReturn['id'] as int);
+      if (oldReturn != null) {
+        await updateProductQuantity(
+          oldReturn.productId,
+          -(oldReturn.quantity),
+        ); // Remove old quantity
+        await updateProductQuantity(
+          saleReturn['product_id'] as int,
+          saleReturn['quantity'] as int,
+        ); // Add new quantity
+      } else {
+        await updateProductQuantity(
+          saleReturn['product_id'] as int,
+          saleReturn['quantity'] as int,
+        );
+      }
+      return await db.update(
+        'SaleReturns',
+        saleReturn,
+        where: 'id = ?',
+        whereArgs: [saleReturn['id']],
       );
+    } catch (e) {
+      print('Error updating sale return: $e');
+      rethrow;
     }
-    return await db.update(
-      'SaleReturns',
-      saleReturn,
-      where: 'id = ?',
-      whereArgs: [saleReturn['id']],
-    );
   }
 
   Future<void> deleteSaleReturn(int id) async {
     final db = await database;
-    final sr = await getSaleReturnById(id);
-    if (sr != null) {
-      await updateProductQuantity(
-        sr.productId,
-        -(sr.quantity),
-      ); // Decrease stock from deleted return
+    try {
+      final sr = await getSaleReturnById(id);
+      if (sr != null) {
+        await updateProductQuantity(
+          sr.productId,
+          -(sr.quantity),
+        ); // Decrease stock from deleted return
+      }
+      await db.delete('SaleReturns', where: 'id = ?', whereArgs: [id]);
+    } catch (e) {
+      print('Error deleting sale return: $e');
+      rethrow;
     }
-    await db.delete('SaleReturns', where: 'id = ?', whereArgs: [id]);
   }
 
   Future<List<Map<String, dynamic>>> getSaleReturns() async {
@@ -704,5 +913,60 @@ class DatabaseHelper {
       return SaleReturn.fromMap(returns.first);
     }
     return null;
+  }
+
+  // Role CRUD Operations
+  Future<int> insertRole(Map<String, dynamic> role) async {
+    Database db = await database;
+    try {
+      return await db.insert('Roles', role);
+    } catch (e) {
+      print('Error inserting role: $e');
+      rethrow;
+    }
+  }
+
+  Future<int> updateRole(Map<String, dynamic> role) async {
+    Database db = await database;
+    try {
+      return await db.update(
+        'Roles',
+        role,
+        where: 'id = ?',
+        whereArgs: [role['id']],
+      );
+    } catch (e) {
+      print('Error updating role: $e');
+      rethrow;
+    }
+  }
+
+  Future<int> deleteRole(int id) async {
+    Database db = await database;
+    try {
+      return await db.delete('Roles', where: 'id = ?', whereArgs: [id]);
+    } catch (e) {
+      print('Error deleting role: $e');
+      rethrow;
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getRoles() async {
+    Database db = await database;
+    return await db.query('Roles');
+  }
+
+  Future<Role?> getRoleById(int id) async {
+    Database db = await database;
+    List<Map<String, dynamic>> roles = await db.query(
+      'Roles',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+    if (roles.isNotEmpty) {
+      return Role.fromMap(roles.first);
+    } else {
+      return null;
+    }
   }
 }

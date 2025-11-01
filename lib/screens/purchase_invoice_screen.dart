@@ -74,7 +74,9 @@ class _PurchaseInvoiceScreenState extends State<PurchaseInvoiceScreen> {
       builder: (context) {
         return AlertDialog(
           title: const Text('تأكيد الحذف'),
-          content: Text('هل أنت متأكد أنك تريد حذف فاتورة الشراء رقم: $invoiceNumber؟'),
+          content: Text(
+            'هل أنت متأكد أنك تريد حذف فاتورة الشراء رقم: $invoiceNumber؟',
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -97,8 +99,21 @@ class _PurchaseInvoiceScreenState extends State<PurchaseInvoiceScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('فواتير الشراء'),
-        backgroundColor: Theme.of(context).colorScheme.primary,
+        title: const Text(
+          'فواتير الشراء',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.blueAccent, Colors.purpleAccent],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
+        iconTheme: const IconThemeData(color: Colors.white),
+        elevation: 4,
       ),
       body: _purchaseInvoices.isEmpty
           ? const Center(
@@ -137,7 +152,10 @@ class _PurchaseInvoiceScreenState extends State<PurchaseInvoiceScreen> {
                             Icons.delete,
                             color: Theme.of(context).colorScheme.error,
                           ),
-                          onPressed: () => _confirmDelete(invoice.id!, invoice.invoiceNumber),
+                          onPressed: () => _confirmDelete(
+                            invoice.id!,
+                            invoice.invoiceNumber,
+                          ),
                         ),
                         IconButton(
                           icon: Icon(
@@ -258,9 +276,7 @@ class _PurchaseInvoiceFormDialogState extends State<PurchaseInvoiceFormDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text(
-        widget.invoice == null
-            ? 'إضافة فاتورة شراء'
-            : 'تعديل فاتورة شراء',
+        widget.invoice == null ? 'إضافة فاتورة شراء' : 'تعديل فاتورة شراء',
       ),
       content: SingleChildScrollView(
         child: Form(
@@ -339,9 +355,7 @@ class _PurchaseInvoiceFormDialogState extends State<PurchaseInvoiceFormDialog> {
               ),
               TextFormField(
                 initialValue: _remainingAmount.toStringAsFixed(2),
-                decoration: const InputDecoration(
-                  labelText: 'المبلغ المتبقي',
-                ),
+                decoration: const InputDecoration(labelText: 'المبلغ المتبقي'),
                 keyboardType: TextInputType.number,
                 readOnly: true,
               ),

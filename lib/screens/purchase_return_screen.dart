@@ -89,7 +89,9 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen> {
       builder: (context) {
         return AlertDialog(
           title: const Text('تأكيد الحذف'),
-          content: Text('هل أنت متأكد أنك تريد حذف مرتجع الشراء لـ $quantity من $productName؟'),
+          content: Text(
+            'هل أنت متأكد أنك تريد حذف مرتجع الشراء لـ $quantity من $productName؟',
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -112,8 +114,21 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('مرتجعات الشراء'),
-        backgroundColor: Theme.of(context).colorScheme.primary,
+        title: const Text(
+          'مرتجعات الشراء',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.blueAccent, Colors.purpleAccent],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
+        iconTheme: const IconThemeData(color: Colors.white),
+        elevation: 4,
       ),
       body: _purchaseReturns.isEmpty
           ? const Center(child: Text('لم يتم العثور على مرتجعات شراء.'))
@@ -152,7 +167,11 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen> {
                             Icons.delete,
                             color: Theme.of(context).colorScheme.error,
                           ),
-                          onPressed: () => _confirmDelete(pr.id!, _getProductName(pr.productId), pr.quantity),
+                          onPressed: () => _confirmDelete(
+                            pr.id!,
+                            _getProductName(pr.productId),
+                            pr.quantity,
+                          ),
                         ),
                       ],
                     ),
@@ -259,9 +278,7 @@ class _PurchaseReturnFormDialogState extends State<PurchaseReturnFormDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text(
-        widget.purchaseReturn == null
-            ? 'إضافة مرتجع شراء'
-            : 'تعديل مرتجع شراء',
+        widget.purchaseReturn == null ? 'إضافة مرتجع شراء' : 'تعديل مرتجع شراء',
       ),
       content: SingleChildScrollView(
         child: Form(
@@ -271,9 +288,7 @@ class _PurchaseReturnFormDialogState extends State<PurchaseReturnFormDialog> {
             children: <Widget>[
               DropdownButtonFormField<int?>(
                 initialValue: _purchaseInvoiceId,
-                decoration: const InputDecoration(
-                  labelText: 'فاتورة الشراء',
-                ),
+                decoration: const InputDecoration(labelText: 'فاتورة الشراء'),
                 items: [
                   const DropdownMenuItem(
                     value: null,
@@ -344,9 +359,7 @@ class _PurchaseReturnFormDialogState extends State<PurchaseReturnFormDialog> {
               ),
               TextFormField(
                 initialValue: _reason,
-                decoration: const InputDecoration(
-                  labelText: 'السبب (اختياري)',
-                ),
+                decoration: const InputDecoration(labelText: 'السبب (اختياري)'),
                 maxLines: 2,
                 onSaved: (value) => _reason = value,
               ),

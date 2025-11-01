@@ -105,11 +105,26 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('إدارة المنتجات'),
-        backgroundColor: Theme.of(context).colorScheme.primary,
+        title: const Text(
+          'إدارة المنتجات',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.blueAccent, Colors.purpleAccent],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
+        iconTheme: const IconThemeData(color: Colors.white),
+        elevation: 4,
       ),
       body: _products.isEmpty
-          ? const Center(child: Text('لم يتم العثور على منتجات. أضف منتجًا جديدًا!'))
+          ? const Center(
+              child: Text('لم يتم العثور على منتجات. أضف منتجًا جديدًا!'),
+            )
           : ListView.builder(
               itemCount: _products.length,
               itemBuilder: (context, index) {
@@ -146,7 +161,8 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                             Icons.delete,
                             color: Theme.of(context).colorScheme.error,
                           ),
-                          onPressed: () => _confirmDelete(product.id!, product.name),
+                          onPressed: () =>
+                              _confirmDelete(product.id!, product.name),
                         ),
                       ],
                     ),
@@ -272,18 +288,12 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
       if (product.id == null) {
         await db.insertProduct(product.toMap());
         if (mounted) {
-          CustomNotificationOverlay.show(
-            context,
-            'تم إضافة المنتج بنجاح!',
-          );
+          CustomNotificationOverlay.show(context, 'تم إضافة المنتج بنجاح!');
         }
       } else {
         await db.updateProduct(product.toMap());
         if (mounted) {
-          CustomNotificationOverlay.show(
-            context,
-            'تم تعديل المنتج بنجاح!',
-          );
+          CustomNotificationOverlay.show(context, 'تم تعديل المنتج بنجاح!');
         }
       }
       widget.onSave();
@@ -426,13 +436,13 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
                       fit: BoxFit.cover,
                     )
                   : _imageUrl != null
-                      ? Image.file(
-                          File(_imageUrl!),
-                          height: 100,
-                          width: 100,
-                          fit: BoxFit.cover,
-                        )
-                      : const Text('لم يتم اختيار صورة.'),
+                  ? Image.file(
+                      File(_imageUrl!),
+                      height: 100,
+                      width: 100,
+                      fit: BoxFit.cover,
+                    )
+                  : const Text('لم يتم اختيار صورة.'),
               ElevatedButton(
                 onPressed: _pickImage,
                 child: const Text('اختر صورة'),

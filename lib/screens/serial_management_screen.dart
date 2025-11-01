@@ -70,7 +70,9 @@ class _SerialManagementScreenState extends State<SerialManagementScreen> {
       builder: (context) {
         return AlertDialog(
           title: const Text('تأكيد الحذف'),
-          content: Text('هل أنت متأكد أنك تريد حذف الرقم التسلسلي: $serialNumber؟'),
+          content: Text(
+            'هل أنت متأكد أنك تريد حذف الرقم التسلسلي: $serialNumber؟',
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -93,11 +95,26 @@ class _SerialManagementScreenState extends State<SerialManagementScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('إدارة الأرقام التسلسلية'),
-        backgroundColor: Theme.of(context).colorScheme.primary,
+        title: const Text(
+          'إدارة الأرقام التسلسلية',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.blueAccent, Colors.purpleAccent],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
+        iconTheme: const IconThemeData(color: Colors.white),
+        elevation: 4,
       ),
       body: _serials.isEmpty
-          ? const Center(child: Text('لم يتم العثور على أرقام تسلسلية. أضف رقما جديدا!'))
+          ? const Center(
+              child: Text('لم يتم العثور على أرقام تسلسلية. أضف رقما جديدا!'),
+            )
           : ListView.builder(
               itemCount: _serials.length,
               itemBuilder: (context, index) {
@@ -127,7 +144,8 @@ class _SerialManagementScreenState extends State<SerialManagementScreen> {
                             Icons.delete,
                             color: Theme.of(context).colorScheme.error,
                           ),
-                          onPressed: () => _confirmDelete(serial.id!, serial.serialNumber),
+                          onPressed: () =>
+                              _confirmDelete(serial.id!, serial.serialNumber),
                         ),
                       ],
                     ),
@@ -222,7 +240,9 @@ class _SerialFormDialogState extends State<SerialFormDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(widget.serial == null ? 'إضافة رقم تسلسلي' : 'تعديل رقم تسلسلي'),
+      title: Text(
+        widget.serial == null ? 'إضافة رقم تسلسلي' : 'تعديل رقم تسلسلي',
+      ),
       content: SingleChildScrollView(
         child: Form(
           key: _formKey,

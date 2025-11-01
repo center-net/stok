@@ -13,6 +13,7 @@ class UserManagementScreen extends StatefulWidget {
 
 class _UserManagementScreenState extends State<UserManagementScreen> {
   List<User> _users = [];
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -21,10 +22,14 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   }
 
   Future<void> _loadUsers() async {
+    setState(() {
+      _isLoading = true;
+    });
     final db = DatabaseHelper();
     final usersMap = await db.getUsers();
     setState(() {
       _users = usersMap.map((e) => User.fromMap(e)).toList();
+      _isLoading = false;
     });
   }
 
@@ -89,50 +94,121 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       appBar: AppBar(
         title: const Text(
           'إدارة المستخدمين',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
-        backgroundColor: Theme.of(context).colorScheme.primary,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.blueAccent, Colors.purpleAccent],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
         iconTheme: const IconThemeData(color: Colors.white),
+        elevation: 4,
       ),
-      body: _users.isEmpty
-          ? const Center(
-              child: Text('لم يتم العثور على مستخدمين. أضف مستخدمًا جديدًا!'),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _users.isEmpty
+          ? Center(
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Colors.white, Color(0xFFE0E0E0)],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.shade300,
+                      blurRadius: 10,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
+                ),
+                child: const Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.people_outline,
+                      size: 80,
+                      color: Colors.blueGrey,
+                    ),
+                    SizedBox(height: 20),
+                    Text(
+                      'لم يتم العثور على مستخدمين.',
+                      style: TextStyle(
+                        fontSize: 20,
+                        color: Colors.blueGrey,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    SizedBox(height: 10),
+                    Text(
+                      'أضف مستخدمًا جديدًا!',
+                      style: TextStyle(fontSize: 16, color: Colors.grey),
+                    ),
+                  ],
+                ),
+              ),
             )
           : ListView.builder(
               itemCount: _users.length,
               itemBuilder: (context, index) {
                 final user = _users[index];
-                return Card(
+                return Container(
                   margin: const EdgeInsets.symmetric(
                     horizontal: 16.0,
                     vertical: 8.0,
                   ),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Colors.white, Color(0xFFF5F5F5)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.shade300,
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
                   child: ListTile(
-                    title: Text(user.name),
+                    title: Text(
+                      user.name,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
                     subtitle: Text(
                       'اسم المستخدم: ${user.username} | الصلاحية: ${user.role}',
+                      style: const TextStyle(color: Colors.grey),
                     ),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
-                          icon: Icon(
+                          icon: const Icon(
                             Icons.lock,
-                            color: Theme.of(context).colorScheme.primary,
+                            color: Colors.blueAccent,
                           ),
                           onPressed: () => _showPasswordChangeDialog(user),
                         ),
                         IconButton(
-                          icon: Icon(
-                            Icons.edit,
-                            color: Theme.of(context).colorScheme.secondary,
-                          ),
+                          icon: const Icon(Icons.edit, color: Colors.green),
                           onPressed: () => _showUserForm(user: user),
                         ),
                         IconButton(
-                          icon: Icon(
+                          icon: const Icon(
                             Icons.delete,
-                            color: Theme.of(context).colorScheme.error,
+                            color: Colors.redAccent,
                           ),
                           onPressed: () => _confirmDelete(user.id!, user.name),
                         ),

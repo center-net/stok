@@ -22,7 +22,9 @@ class _CashierSalesScreenState extends State<CashierSalesScreen> {
 
   String _getProductName(int productId) {
     try {
-      return _availableProducts.firstWhere((product) => product.id == productId).name;
+      return _availableProducts
+          .firstWhere((product) => product.id == productId)
+          .name;
     } catch (e) {
       return 'منتج غير معروف';
     }
@@ -143,10 +145,7 @@ class _CashierSalesScreenState extends State<CashierSalesScreen> {
 
     _clearSale();
     if (mounted) {
-      CustomNotificationOverlay.show(
-        context,
-        'تم إنهاء عملية البيع بنجاح!',
-      );
+      CustomNotificationOverlay.show(context, 'تم إنهاء عملية البيع بنجاح!');
     }
   }
 
@@ -154,8 +153,21 @@ class _CashierSalesScreenState extends State<CashierSalesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('لوحة مبيعات الكاشير'),
-        backgroundColor: Theme.of(context).colorScheme.primary,
+        title: const Text(
+          'لوحة مبيعات الكاشير',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.blueAccent, Colors.purpleAccent],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
+        iconTheme: const IconThemeData(color: Colors.white),
+        elevation: 4,
       ),
       body: Column(
         children: [
@@ -288,7 +300,9 @@ class _CashierSalesScreenState extends State<CashierSalesScreen> {
                   ),
                 ),
                 TextField(
-                  decoration: const InputDecoration(labelText: 'المبلغ المدفوع'),
+                  decoration: const InputDecoration(
+                    labelText: 'المبلغ المدفوع',
+                  ),
                   keyboardType: TextInputType.number,
                   onChanged: (value) {
                     setState(() {

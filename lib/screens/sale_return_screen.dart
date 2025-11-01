@@ -85,7 +85,9 @@ class _SaleReturnScreenState extends State<SaleReturnScreen> {
       builder: (context) {
         return AlertDialog(
           title: const Text('تأكيد الحذف'),
-          content: Text('هل أنت متأكد أنك تريد حذف مرتجع البيع لـ $quantity من $productName؟'),
+          content: Text(
+            'هل أنت متأكد أنك تريد حذف مرتجع البيع لـ $quantity من $productName؟',
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -108,8 +110,21 @@ class _SaleReturnScreenState extends State<SaleReturnScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('مرتجعات البيع'),
-        backgroundColor: Theme.of(context).colorScheme.primary,
+        title: const Text(
+          'مرتجعات البيع',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.blueAccent, Colors.purpleAccent],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
+        iconTheme: const IconThemeData(color: Colors.white),
+        elevation: 4,
       ),
       body: _saleReturns.isEmpty
           ? const Center(child: Text('لم يتم العثور على مرتجعات بيع.'))
@@ -147,7 +162,11 @@ class _SaleReturnScreenState extends State<SaleReturnScreen> {
                             Icons.delete,
                             color: Theme.of(context).colorScheme.error,
                           ),
-                          onPressed: () => _confirmDelete(sr.id!, _getProductName(sr.productId), sr.quantity),
+                          onPressed: () => _confirmDelete(
+                            sr.id!,
+                            _getProductName(sr.productId),
+                            sr.quantity,
+                          ),
                         ),
                       ],
                     ),
@@ -334,9 +353,7 @@ class _SaleReturnFormDialogState extends State<SaleReturnFormDialog> {
               ),
               TextFormField(
                 initialValue: _reason,
-                decoration: const InputDecoration(
-                  labelText: 'السبب (اختياري)',
-                ),
+                decoration: const InputDecoration(labelText: 'السبب (اختياري)'),
                 maxLines: 2,
                 onSaved: (value) => _reason = value,
               ),

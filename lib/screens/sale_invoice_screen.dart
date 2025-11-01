@@ -73,7 +73,9 @@ class _SaleInvoiceScreenState extends State<SaleInvoiceScreen> {
       builder: (context) {
         return AlertDialog(
           title: const Text('تأكيد الحذف'),
-          content: Text('هل أنت متأكد أنك تريد حذف فاتورة البيع رقم: $invoiceNumber؟'),
+          content: Text(
+            'هل أنت متأكد أنك تريد حذف فاتورة البيع رقم: $invoiceNumber؟',
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -96,8 +98,21 @@ class _SaleInvoiceScreenState extends State<SaleInvoiceScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('فواتير البيع'),
-        backgroundColor: Theme.of(context).colorScheme.primary,
+        title: const Text(
+          'فواتير البيع',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.blueAccent, Colors.purpleAccent],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
+        iconTheme: const IconThemeData(color: Colors.white),
+        elevation: 4,
       ),
       body: _saleInvoices.isEmpty
           ? const Center(child: Text('لم يتم العثور على فواتير بيع.'))
@@ -134,7 +149,10 @@ class _SaleInvoiceScreenState extends State<SaleInvoiceScreen> {
                             Icons.delete,
                             color: Theme.of(context).colorScheme.error,
                           ),
-                          onPressed: () => _confirmDelete(invoice.id!, invoice.invoiceNumber),
+                          onPressed: () => _confirmDelete(
+                            invoice.id!,
+                            invoice.invoiceNumber,
+                          ),
                         ),
                         IconButton(
                           icon: Icon(
@@ -333,9 +351,7 @@ class _SaleInvoiceFormDialogState extends State<SaleInvoiceFormDialog> {
               ),
               TextFormField(
                 initialValue: _remainingAmount.toStringAsFixed(2),
-                decoration: const InputDecoration(
-                  labelText: 'المبلغ المتبقي',
-                ),
+                decoration: const InputDecoration(labelText: 'المبلغ المتبقي'),
                 keyboardType: TextInputType.number,
                 readOnly: true,
               ),

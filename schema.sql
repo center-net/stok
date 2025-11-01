@@ -122,3 +122,9 @@ CREATE TABLE IF NOT EXISTS SaleReturns (
     FOREIGN KEY (sale_invoice_id) REFERENCES SaleInvoices(id),
     FOREIGN KEY (product_id) REFERENCES Products(id)
 );
+
+CREATE TABLE IF NOT EXISTS Roles (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL UNIQUE,
+    description TEXT
+);

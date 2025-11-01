@@ -79,13 +79,24 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('إدارة الفئات'),
-        backgroundColor: Theme.of(context).colorScheme.primary,
+        title: const Text(
+          'إدارة الفئات',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.blueAccent, Colors.purpleAccent],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
+        iconTheme: const IconThemeData(color: Colors.white),
+        elevation: 4,
       ),
       body: _categories.isEmpty
-          ? const Center(
-              child: Text('لم يتم العثور على فئات. أضف فئة جديدة!'),
-            )
+          ? const Center(child: Text('لم يتم العثور على فئات. أضف فئة جديدة!'))
           : ListView.builder(
               itemCount: _categories.length,
               itemBuilder: (context, index) {
@@ -113,7 +124,8 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                             Icons.delete,
                             color: Theme.of(context).colorScheme.error,
                           ),
-                          onPressed: () => _confirmDelete(category.id!, category.name),
+                          onPressed: () =>
+                              _confirmDelete(category.id!, category.name),
                         ),
                       ],
                     ),
@@ -167,20 +179,15 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
       if (category.id == null) {
         await db.insertCategory(category.toMap());
         if (mounted) {
-          CustomNotificationOverlay.show(
-            context,
-            'تم إضافة الفئة بنجاح!',
-          );
+          CustomNotificationOverlay.show(context, 'تم إضافة الفئة بنجاح!');
         }
       } else {
         await db.updateCategory(category.toMap());
         if (mounted) {
-          CustomNotificationOverlay.show(
-            context,
-            'تم تعديل الفئة بنجاح!',
-          );
+          CustomNotificationOverlay.show(context, 'تم تعديل الفئة بنجاح!');
         }
-      }      widget.onSave();
+      }
+      widget.onSave();
       if (mounted) {
         Navigator.pop(context);
       }
